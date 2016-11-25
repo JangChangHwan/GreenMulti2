@@ -1,0 +1,10 @@
+D:\MyProjects\GreenMulti2\GreenMulti2\bin\Release\GreenMulti2.exe
+D:\MyProjects\GreenMulti2\GreenMulti2\bin\Release\GreenMulti2.pdb
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.Properties.Resources.resources
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.csproj.GenerateResource.Cache
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.exe
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.pdb
+D:\MyProjects\GreenMulti2\GreenMulti2\bin\Release\GreenMulti2.exe.manifest
+D:\MyProjects\GreenMulti2\GreenMulti2\bin\Release\GreenMulti2.application
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.exe.manifest
+D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Release\GreenMulti2.application

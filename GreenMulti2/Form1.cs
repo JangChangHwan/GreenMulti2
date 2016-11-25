@@ -10,7 +10,10 @@ using System.Windows.Forms;
 namespace GreenMulti2 {
 	public partial class Form1 : Form {
 		public Form1() {
-		InitializeComponent();
+			InitializeComponent();
+			this.Text = "초록멀티 2.0";
+			this.Size = new Size(600, 300);
+			this.Location = new Point(50, 50);
 		}
 	}
 }

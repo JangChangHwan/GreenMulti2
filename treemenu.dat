@@ -1,0 +1,137 @@
+ccollections
+OrderedDict
+p0
+((lp1
+(lp2
+Vtop
+p3
+a(V\ucd08\uae30\uba54\ub274
+p4
+V
+p5
+Vgreen|guide|mail|bbs|computer|potion|blindnews||magazin|pds
+p6
+tp7
+aa(lp8
+Vgreen
+p9
+a(V0. \ucd08\ub85d\ub4f1\ub300
+p10
+Vtop
+p11
+Vgreen1|green2|green3|green4|green5|green6|green7|green8|green9
+p12
+tp13
+aa(lp14
+Vgreen1
+p15
+a(V1. \uacf5\uc9c0\uc0ac\ud56d
+p16
+Vgreen
+p17
+V/bbs/board.php?bo_table=green1&cl=green
+p18
+tp19
+aa(lp20
+Vgreen2
+p21
+a(V2. \ub098\ub214\uc7a5\ud130
+p22
+Vtop
+p23
+V/bbs/board.php?bo_table=green2&cl=green
+p24
+tp25
+aa(lp26
+Vgreen3
+p27
+a(V3. \uc6b0\ub9ac\ub4e4\uc758 \uc774\uc57c\uae30
+p28
+Vgreen
+p29
+V/bbs/board.php?bo_table=green3&cl=green
+p30
+tp31
+aa(lp32
+Vgreen4
+p33
+a(V4. \uc790\ub8cc\uc2e4
+p34
+Vgreen
+p35
+Vgreen41|green42|green43|green44|green45|green46|green47
+p36
+tp37
+aa(lp38
+Vgreen41
+p39
+a(V1. \uc6b4\uc601\uccb4\uc81c/\ub4dc\ub77c\uc774\ubc84
+p40
+Vgreen4
+p41
+V/bbs/board.php?bo_table=green41&cl=green
+p42
+tp43
+aa(lp44
+Vguide
+p45
+a(V1. \uacf5\uc9c0 \ubc0f \uc774\uc6a9\uc548\ub0b4
+p46
+Vtop
+p47
+Vnotice|oldinfo|rtguide
+p48
+tp49
+aa(lp50
+Vnotice
+p51
+a(V1. \uacf5\uc9c0\uc0ac\ud56d
+p52
+Vguide
+p53
+V/bbs/board.php?bo_table=notice
+p54
+tp55
+aa(lp56
+Voldinfo
+p57
+a(V2. \uc9c0\ub09c \uacf5\uc9c0
+p58
+Vguide
+p59
+V/bbs/board.php?bo_table=oldinfo
+p60
+tp61
+aa(lp62
+Vrtguide
+p63
+a(V3. \ub9c8\uc744\uc774\uc6a9\uc548\ub0b4
+p64
+Vguide
+p65
+V/bbs/board.php?bo_table=rtguide
+p66
+tp67
+aa(lp68
+Vmail
+p69
+a(V2. \uc804\uc790\uc6b0\ud3b8
+p70
+Vtop
+p71
+Vrmail|wmail
+p72
+tp73
+aa(lp74
+Vbbs
+p75
+a(V3. \uac8c\uc2dc\ud310
+p76
+Vtop
+p77
+Vfree
+p78
+tp79
+aatp80
+Rp81
+.

@@ -11,7 +11,8 @@ import wx
 from collections import OrderedDict
 
 
-class Utility():
+
+class Utility(object):
 
 	dTree = OrderedDict()
 
@@ -25,6 +26,7 @@ class Utility():
 				self.dTree = pickle.load(f)
 		except:
 			self.dTree['top'] = (u'초기메뉴', '', 'green|guide|mail|bbs|computer|potion|blindnews||magazin|pds')
+
 
 	def SaveTreeMenu(self):
 		try:
@@ -324,4 +326,5 @@ class MultilineEditor(wx.Dialog):
 		self.textCtrl = wx.TextCtrl(self, -1, content, (10, 10), (380, 150),  wx.TE_MULTILINE)
 		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인(&Y)', (180, 170), (100, 20))
 		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(&N)', (290, 170), (100, 20))
+
 

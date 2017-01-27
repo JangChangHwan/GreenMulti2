@@ -6,9 +6,9 @@ import sys
 import winsound
 import os
 import _winreg
-import urllib
 import wx
 from collections import OrderedDict
+
 
 
 
@@ -326,5 +326,14 @@ class MultilineEditor(wx.Dialog):
 		self.textCtrl = wx.TextCtrl(self, -1, content, (10, 10), (380, 150),  wx.TE_MULTILINE)
 		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인(&Y)', (180, 170), (100, 20))
 		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(&N)', (290, 170), (100, 20))
+
+
+def TransferManager(dFileInfo, q):
+	"""q = filename, mode, totalSize, downSize, elapsedTime."""
+
+	while True:
+		fileName, mode, totalSize, downSize, elapsedTime = q.get()
+		if mode == 'exit': return
+		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
 
 

@@ -6,7 +6,7 @@ from http import *
 from util import *
 from collections import OrderedDict
 from writePanel import WritePanel
-
+from multiprocessing import Process, Queue
 
 
 class ViewPanel(wx.Panel, Utility, Http):
@@ -44,6 +44,12 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.Cancel.Hide()
 		self.Cancel.Bind(wx.EVT_BUTTON, self.BackToBBS)
 
+		# 알트 다음글 넘어가는 키: 페이지다운
+		idAltPgDn = wx.NewId()
+		self.AltPgDn = wx.Button(self, idAltPgDn, u'다음글', (500, 500), (1,1))
+		self.AltPgDn.Hide()
+		self.AltPgDn.Bind(wx.EVT_BUTTON, self.OnNextArticle)
+
 
 
 		self.GetInfo(url)
@@ -51,7 +57,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.textCtrl1.SetFocus()
 		self.Play('pageNext.wav')
 
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
+			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL), 
+			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn)
+			])
+
 		self.SetAcceleratorTable(accel)
 		
 
@@ -60,10 +70,12 @@ class ViewPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == ord('W'):
 			self.WriteArticle()
+		elif key == ord('E'):
+			self.EditArticle()
 		elif key == wx.WXK_DELETE:
 			self.DeleteArticle()
-#		elif key == ord('E'):
-#			self.WriteArticle('w=u')
+		elif key == ord('D'):
+			self.OnDownFiles('')
 
 		else:
 			e.Skip()
@@ -83,7 +95,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def GetInfo(self, selector):
-		self.currentArticle = url = self.Url(selector)
+		self.currentArticle = url = selector
 		self.Get(url)
 		self.title = self.soup.head.title.getText()
 		# 글쓴이 등등 정보 추출
@@ -91,10 +103,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.info = infoSection.getText()
 		# 첨부파일 추출
 		self.files.clear()
-		fileLinks = self.soup('a', href=re.compile('^/download.php'))
+		fileLinks = self.soup('a', href=re.compile('download.php'))
 		if fileLinks is not None:
 			for link in fileLinks:
-				self.files[link.strong.getText()] = link['href']
+				descript = ' '.join(link.getText().split())
+				self.files[link.strong.getText()] = (descript, link['href'])
 		# 본문 내용 추출
 		div = self.soup.find('div', id='bo_v_con')
 		self.content = self.GetTextFromTag(div)
@@ -122,7 +135,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 		# 만약 첨부파일이 있다면 문자열로 정리
 		fileList = ''
 		if self.files:
-			fileList = ''.join([u'\r\n<첨부파일:%s>' % filename for filename, url in self.files.items()])
+			fileList = ''.join([u'\r\n첨부파일:%s' % descript for filename, (descript, url) in self.files.items()])
 		body = self.title + self.info + fileList + '\r\n' + self.content + u'\r\n게[시물의 끝입니다.]'
 		body = body.replace('\t', ' ')
 		self.textCtrl1.SetValue(body)
@@ -138,8 +151,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 		deleteUrl = self.comments[key]
 		if not deleteUrl: return
 		if not MsgBox(self, u'댓글 삭제', u'다음 댓글을 삭제할까요?\n' + key, True): return
-		self.Get(self.Url(deleteUrl))
-		self.GetInfo(self.Url(self.currentArticle))
+		self.Get(deleteUrl)
+		self.GetInfo(self.currentArticle)
 		self.Display()
 		self.Play('delete.wav')
 
@@ -147,7 +160,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 	def OnButton(self, e):
 		form = self.soup.find('form', attrs={'name': 'fviewcomment'})
 		if form is None: return
-		selector = self.Url(form['action'])
+		selector = form['action']
 
 		paramDict = {}
 		hiddens = self.soup('input', type='hidden')
@@ -166,7 +179,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 		if self.response.getheader('Location'):
 			self.textCtrl2.Clear()
 			self.Play('up.wav')
-			self.GetInfo(self.Url(self.currentArticle))
+			self.GetInfo(self.currentArticle)
 			self.Display()
 			n = self.listCtrl.GetItemCount()
 			if n == 0: return
@@ -174,7 +187,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 			self.listCtrl.Select(n-1)
 			self.listCtrl.SetFocus()
 		else:
-			self.GetInfo(self.Url(self.currentArticle))
+			self.GetInfo(self.currentArticle)
 			MsgBox(self, u'경고', u'댓글을 올리는 속도가 너무 빠릅니다. 잠시 후에 다시 실행해 주세요.')
 			self.textCtrl2.SetFocus()
 
@@ -183,11 +196,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 	def DeleteArticle(self):
 		deleteUrl = self.soup.find('a', href=re.compile('/bbs/delete.php?'))
 		if deleteUrl is None: return
-		href = self.Url(deleteUrl['href'])
+		href = deleteUrl['href']
 		if MsgBox(self, u'삭제 경고', u'이 게시물을 삭제할까요?', True):
 			self.Get(href)
 			url =  self.response.getheader('Location')
-			self.parent.bbs.GetList(self.Url(url))
+			self.parent.bbs.GetList(url)
 			self.parent.bbs.Display()
 			self.parent.bbs.Show()
 			self.parent.bbs.listCtrl.SetFocus()
@@ -198,7 +211,15 @@ class ViewPanel(wx.Panel, Utility, Http):
 	def WriteArticle(self):
 		link = self.soup.find('a', href=re.compile(r'/bbs/write.php\?bo_table='))
 		if link is None: return
-		href = self.Url(link['href'])
+		href = link['href']
+		self.Hide()
+		self.parent.write = WritePanel(self.parent, href, before='view')
+
+
+	def EditArticle(self):
+		link = self.soup.find('a', href=re.compile(r'/bbs/write.php\?w=u'))
+		if link is None: return
+		href = link['href']
 		self.Hide()
 		self.parent.write = WritePanel(self.parent, href, before='view')
 
@@ -208,4 +229,31 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.parent.bbs.SetFocus()
 		self.parent.bbs.Play('pagePrev.wav')
 		self.Destroy()
+
+
+	def OnNextArticle(self, e):
+		links = self.soup('a')
+		if links is None: return
+		url = ''
+		for link in links:
+			if link.getText() == u'다음글':
+				url = link['href']
+				break
+
+		if not url: return
+		print url
+		self.GetInfo(url)
+		self.Display()
+		self.textCtrl1.SetFocus()
+		self.Play('pageNext.wav')
+
+
+	def OnDownFiles(self, e):
+		if not self.files: return
+		downloadFolder = self.ReadReg('downloadfolder')
+		if not downloadFolder : downloadFolder = 'c:\\'
+		for fileName, (descript, url) in self.files.items():
+			filePath = os.path.join(downloadFolder, fileName)
+			p = Process(target=Download, args=(filePath, url, self.parent.transQueue))
+			p.start()
 

@@ -94,7 +94,8 @@ class WritePanel(wx.Panel, Http):
 
 		# 첨부파일이 없다면 post로 보내고 있으면 multipartPost로 보낸다.
 		if path and os.path.exists(path):
-			self.MultipartPost('/bbs/write_update.php', self.dInfo, {'bf_file[]': open(path, 'rb')})
+			p = Process(target=Upload, args=('/bbs/write_update.php', self.dInfo, {'bf_file[]': path}, self.parent.transQueue))
+			p.start()
 			self.parent.bbs.Play('pagePrev.wav')
 
 		else:

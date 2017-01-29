@@ -50,7 +50,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.AltPgDn.Hide()
 		self.AltPgDn.Bind(wx.EVT_BUTTON, self.OnNextArticle)
 
-
+		# 알트 페이지업 이전글 넘어가는 키: 
+		idAltPgUp = wx.NewId()
+		self.AltPgUp = wx.Button(self, idAltPgUp, u'이전글', (500, 500), (1,1))
+		self.AltPgUp.Hide()
+		self.AltPgUp.Bind(wx.EVT_BUTTON, self.OnPrevArticle)
 
 		self.GetInfo(url)
 		self.Display()
@@ -59,7 +63,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
 			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL), 
-			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn)
+			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
+			(wx.ACCEL_ALT, wx.WXK_PAGEUP, idAltPgUp)
 			])
 
 		self.SetAcceleratorTable(accel)
@@ -129,6 +134,9 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
+		title = self.soup.head.title.string
+		self.parent.SetTitle(title + ' - ' + self.parent.mainTitle)
+
 		self.textCtrl1.Clear()
 		self.listCtrl.DeleteAllItems()
 
@@ -225,6 +233,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def BackToBBS(self, e):
+		self.parent.bbs.Display()
 		self.parent.bbs.Show()
 		self.parent.bbs.SetFocus()
 		self.parent.bbs.Play('pagePrev.wav')
@@ -240,8 +249,26 @@ class ViewPanel(wx.Panel, Utility, Http):
 				url = link['href']
 				break
 
-		if not url: return
-		print url
+		if not url: return self.Play('beep.wav')
+
+		self.GetInfo(url)
+		self.Display()
+		self.textCtrl1.SetFocus()
+		self.Play('pageNext.wav')
+
+
+
+	def OnPrevArticle(self, e):
+		links = self.soup('a')
+		if links is None: return
+		url = ''
+		for link in links:
+			if link.getText() == u'이전글':
+				url = link['href']
+				break
+
+		if not url: return self.Play('beep.wav')
+
 		self.GetInfo(url)
 		self.Display()
 		self.textCtrl1.SetFocus()
@@ -256,4 +283,4 @@ class ViewPanel(wx.Panel, Utility, Http):
 			filePath = os.path.join(downloadFolder, fileName)
 			p = Process(target=Download, args=(filePath, url, self.parent.transQueue))
 			p.start()
-
+			self.parent.lTransferProcess.append(p)

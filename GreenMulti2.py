@@ -3,9 +3,12 @@
 import wx
 from menuPanel import *
 from util import *
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, freeze_support
 from threading import Thread
 from collections import OrderedDict
+import sys
+import time
+import datetime
 
 
 class GreenMulti2(wx.Frame, Utility):
@@ -13,10 +16,13 @@ class GreenMulti2(wx.Frame, Utility):
 	cookies = ''
 	transQueue = Queue()
 	dFileInfo = OrderedDict()
+	mainTitle = ''
+	lTransferProcess = []
 
 	def __init__(self, title):
 		wx.Frame.__init__(self, None, -1, title, wx.DefaultPosition, (500, 500))
 		Utility.__init__(self)
+		self.mainTitle = title
 
 		# 메뉴바
 		menuBar = wx.MenuBar()
@@ -29,6 +35,10 @@ class GreenMulti2(wx.Frame, Utility):
 		downloadFolderMI = wx.MenuItem(fileMenu, -1, u"다운로드 폴더 변경")
 		fileMenu.AppendItem(downloadFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnDownloadFolder, downloadFolderMI)
+
+		transInfoMI = wx.MenuItem(fileMenu, -1, u"파일 전송 정보\tCtrl+J")
+		fileMenu.AppendItem(transInfoMI)
+		self.Bind(wx.EVT_MENU, self.OnTransInfo, transInfoMI)
 
 		self.xxxMI = wx.MenuItem(fileMenu, -1, u"메뉴관리")
 		fileMenu.AppendItem(self.xxxMI)
@@ -49,10 +59,22 @@ class GreenMulti2(wx.Frame, Utility):
 		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue))
 		th.start()
 
-		self.OnLogin('')
+		self.Login()
 
 
 	def OnClose(self, e):
+		# 전송 중인 프로 세스 종료 여부
+		for p in self.lTransferProcess:
+			if p is not None and p.is_alive():
+				if MsgBox(self, u'경고', u'파일 전송이 끝나지 않았습니다. 그래도 초록멀티를 종료할까요?', True):
+					break
+				else:
+					return
+		# 프로세스 강제종료
+		for p in self.lTransferProcess:
+			if p is not None: p.terminate()
+
+		# 파일 전송 관리자 쓰레드를 종료
 		self.transQueue.put(('', 'exit', 0, 0, 0))
 		self.Destroy()
 
@@ -64,7 +86,14 @@ class GreenMulti2(wx.Frame, Utility):
 
 
 	def OnLogin(self, e):
-#		try:
+		if self.loginMI.GetText().startswith(u'로그인'): 
+			self.Login()
+		else:
+			self.Logout()
+
+
+	def Login(self):
+		try:
 			kbuid = self.Decrypt(self.ReadReg('kbuid'))
 			if not kbuid: kbuid = InputBox(self, u'넓은마을 로그인', u'아이디')
 
@@ -93,8 +122,8 @@ class GreenMulti2(wx.Frame, Utility):
 				self.Logout(u'초록등대 정회원이 아닙니다. 회원 가입 및 등급 관련 문의는 초록등대 운영자에게 해 주세요.')
 				return
 
-#		except:
-#			pass
+		except:
+			pass
 
 
 	def Logout(self, msg=u'로그아웃하였습니다. 로그인 정보를 삭제했습니다.'):
@@ -117,7 +146,23 @@ class GreenMulti2(wx.Frame, Utility):
 		dirDialog.Destroy()
 
 
+	def OnTransInfo(self, e):
+		if not self.dFileInfo: return MsgBox(self, u'알림', u'파일 전송 정보가 없습니다.')
+		infoDialog = TransferInfo(self)
+		infoDialog.ShowModal()
+
+
+
+
+def BetaTest():
+	limitDate = datetime.date(2017, 4, 30)
+	currentDate = datetime.date.fromtimestamp(time.time())
+	if limitDate < currentDate:
+		sys.exit()
+
 if __name__ == '__main__':
+	BetaTest()
+	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티 2.0')
+	GreenMulti2(u'초록멀티2 Beta1')
 	app.MainLoop()

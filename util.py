@@ -330,10 +330,56 @@ class MultilineEditor(wx.Dialog):
 
 def TransferManager(dFileInfo, q):
 	"""q = filename, mode, totalSize, downSize, elapsedTime."""
-
 	while True:
 		fileName, mode, totalSize, downSize, elapsedTime = q.get()
 		if mode == 'exit': return
 		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
 
+
+class TransferInfo(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, u'파일 전송 정보', wx.DefaultPosition, (400, 400))
+		self.parent = parent
+
+		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (380, 380), wx.LC_REPORT | wx.LC_SINGLE_SEL)
+		self.listCtrl.InsertColumn(0, u'파일이름', width=150)
+		self.listCtrl.InsertColumn(1, u'mode', width=50)
+		self.listCtrl.InsertColumn(2, u'전송율', width=50)
+		self.listCtrl.InsertColumn(3, u'전송속도', width=50)
+		self.listCtrl.InsertColumn(4, u'크기', width=80)
+
+		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+		self.Bind(wx.EVT_CLOSE, self.OnClose)
+		self.LoadFileInfo()
+
+	def OnClose(self, e):
+		self.Destroy()
+
+	def OnKeyDown(self, e):
+		key = e.GetKeyCode()
+		if key == wx.WXK_SPACE:
+			self.LoadFileInfo()
+		elif key == wx.WXK_ESCAPE:
+			self.OnClose(e)
+
+		else:
+			e.Skip()
+
+	def LoadFileInfo(self):
+		index = self.listCtrl.GetFocusedItem()
+		if index == -1: index = 0
+
+		self.listCtrl.DeleteAllItems()
+		for fileName, (mode, totalSize, downSize, elapsedTime) in self.parent.dFileInfo.items():
+			row = self.listCtrl.InsertStringItem(sys.maxint, fileName)
+			self.listCtrl.SetStringItem(row, 1, mode)
+			ratio = 100.0 * downSize / totalSize
+			self.listCtrl.SetStringItem(row, 2, u'%0.2f %%' % ratio)
+			speed = downSize / 1024.0 / 1024.0 / elapsedTime 
+			self.listCtrl.SetStringItem(row, 3, u'%0.2f MB/sec' % speed)
+			size = totalSize / 1024.0 / 1024.0
+			self.listCtrl.SetStringItem(row, 4, u'%0.2f MB' % size)
+
+		self.listCtrl.Focus(index)
+		self.listCtrl.Select(index)
 

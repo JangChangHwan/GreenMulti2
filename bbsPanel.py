@@ -92,6 +92,9 @@ class BBSPanel(wx.Panel, Utility, Http):
 				pass
 
 	def Display(self):
+		title = self.soup.head.title.string
+		self.parent.SetTitle(title + ' - ' + self.parent.mainTitle)
+
 		self.listCtrl.DeleteAllItems()
 		for text, author, href in self.lArticles:
 			index = self.listCtrl.InsertStringItem(sys.maxint, text)
@@ -136,6 +139,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 
 	def BackToMenu(self, e):
+		self.parent.menu.Display(self.parent.menu.currentMenu)
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')

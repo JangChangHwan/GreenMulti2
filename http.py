@@ -38,8 +38,11 @@ class Http(object):
 
 	def Post(self, selector, fields, soup=True):
 		selector = self.Url(selector)
-		fieldList = fields.items() if isinstance(fields, dict) else fields
-		fieldList = [(k, v.encode('utf-8', 'ignore')) for k, v in fieldList]
+		fieldList = []
+		for k, v in fields.items():
+			if type(v) == unicode: v = v.encode('utf-8')
+			fieldList.append((k, v))
+
 		boundary, body = MultipartPostHandler.multipart_encode(fieldList, [])
 		content_type = 'multipart/form-data; boundary=%s' % boundary
 
@@ -136,7 +139,7 @@ class Download(Process, Http, Utility):
 			if self.response.length == 0: break
 
 		f.close()
-		self.Play('down.wav', False)
+		self.Play('down.wav', async=False)
 
 
 
@@ -159,9 +162,11 @@ class Upload(Process, Utility, Http):
 
 	def run(self):
 		self.selector = self.Url(self.selector)
-		fieldList = self.fields.items() if isinstance(self.fields, dict) else self.fields
-		fieldList = [(k, v.encode('utf-8', 'ignore')) for k, v in fieldList]
-		fileList = self.files.items() if isinstance(self.files, dict) else self.files
+		fieldList = []
+		for k, v in self.fields.items():
+			if type(v) == unicode: v = v.encode('utf-8')
+			fieldList.append((k, v))
+		fileList = self.files.items()
 		boundary, body = MultipartPostHandler.multipart_encode(fieldList, fileList)
 		content_type = 'multipart/form-data; boundary=%s' % boundary
 		chunck = 1024 * 256
@@ -182,11 +187,11 @@ class Upload(Process, Utility, Http):
 			h.send(body[upSize:endPart])
 			elapsedTime = time.time() - startTime
 			self.q.put((self.filename, 'upload', fileSize, upSize, elapsedTime))
-			print self.filename, upSize
 			upSize = endPart
 
 		self.response = h.getresponse()
 		self.Play('up.wav', async=False)
+
 
 
 	def LoginCheck(self):

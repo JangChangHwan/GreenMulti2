@@ -78,8 +78,9 @@ class Http(object):
 	def GetTextFromTag(self, soup_tag):
 		s = unicode(soup_tag)
 		texts = re.findall('>([^<>]*)<', s)
+		texts = [s.strip() for s in texts if re.search(u'[\\w가-힣]', s) is not None]
 		text = '\r\n'.join(texts)
-		text = text.replace('&nbsp;', ' ')
+		text = text.replace('&nbsp;', '')
 		return text
 
 

@@ -7,6 +7,7 @@ from util import *
 from collections import OrderedDict
 from writePanel import WritePanel
 from multiprocessing import Process, Queue
+from win32com.client import Dispatch
 
 
 class ViewPanel(wx.Panel, Utility, Http):
@@ -17,7 +18,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 	content = ''
 	files = OrderedDict()
 	comments = OrderedDict()
-		
+	currentComment = -1
+	
 	def __init__(self, parent, url):
 		wx.Panel.__init__(self, parent, -1, (0, 0), (500, 500))
 		Http.__init__(self, parent)
@@ -29,13 +31,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.textCtrl1.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl1KeyDown)
 
 		# 댓글 표시창
-		self.listCtrl = wx.ListCtrl(self, -1, wx.Point(10, 300), wx.Size(480, 140), wx.LC_REPORT | wx.LC_SINGLE_SEL)
-		self.listCtrl.InsertColumn(0, u'댓글', width=480)
-		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnListCtrlRightDown)
-		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnListCtrlKeyDown)
+		self.textCtrl2 = wx.TextCtrl(self, -1, '', wx.Point(10, 300), wx.Size(480, 140), wx.TE_READONLY | wx.TE_MULTILINE)
+		self.textCtrl2.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl2KeyDown)
 
-		wx.StaticText(self, -1, u'댓글', (10, 450), (40, 40))
-		self.textCtrl2 = wx.TextCtrl(self, -1, '', (60, 450), (380, 40), wx.TE_MULTILINE)
+		self.lbl = wx.StaticText(self, -1, u'댓글', (10, 450), (40, 40))
+		self.textCtrl3 = wx.TextCtrl(self, -1, '', (60, 450), (380, 40), wx.TE_MULTILINE)
 		self.button = wx.Button(self, -1, u'저장', (350, 450), (40, 40))
 		self.button.Bind(wx.EVT_BUTTON, self.OnButton)
 
@@ -86,17 +86,52 @@ class ViewPanel(wx.Panel, Utility, Http):
 			e.Skip()
 
 
-	def OnListCtrlRightDown(self, e):
-		pass
 
-
-	def OnListCtrlKeyDown(self, e):
+	def OnTextCtrl2KeyDown(self, e):
 		key = e.GetKeyCode()
 		if key == wx.WXK_DELETE:
 			self.DeleteComment()
+		elif key == wx.WXK_PAGEDOWN:
+			self.NextComment()
+		elif key == wx.WXK_PAGEUP:
+			self.PrevComment()
 
 		else:
 			e.Skip()
+
+
+	def NextComment(self):
+		if not self.comments or self.currentComment < 0: 
+			self.Play('beep.wav')
+			return
+
+		if self.currentComment >= len(self.comments) - 1: 
+			self.currentComment = len(self.comments) - 1
+			self.Play('beep.wav')
+			return
+
+		self.currentComment += 1
+		reple = u'%s번 댓글:' % (self.currentComment + 1)  + self.comments.keys()[self.currentComment]
+		self.textCtrl2.SetValue(reple)
+		self.lbl.SetFocus()
+		self.textCtrl2.SetFocus()
+
+
+	def PrevComment(self):
+		if len(self.comments) < 2 or self.currentComment < 1: 
+			self.Play('beep.wav')
+			return
+
+		if self.currentComment > len(self.comments) - 1: 
+			self.currentComment = len(self.comments) - 1
+
+		self.currentComment -= 1
+		reple = u'%s번 댓글:' % (self.currentComment + 1)  + self.comments.keys()[self.currentComment]
+		self.textCtrl2.SetValue(reple)
+		self.lbl.SetFocus()
+		self.textCtrl2.SetFocus()
+
+
 
 
 	def GetInfo(self, selector):
@@ -134,11 +169,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
-		title = self.soup.head.title.string
-		self.parent.SetTitle(title + ' - ' + self.parent.mainTitle)
-
 		self.textCtrl1.Clear()
-		self.listCtrl.DeleteAllItems()
+		self.textCtrl2.Clear()
 
 		# 만약 첨부파일이 있다면 문자열로 정리
 		fileList = ''
@@ -149,15 +181,19 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.textCtrl1.SetValue(body)
 
 		# 댓글 표시
-		for reply in self.comments.keys():
-			self.listCtrl.InsertStringItem(sys.maxint, reply)
+		if self.comments:
+			if self.currentComment == -1: self.currentComment = 0
+			if self.currentComment > len(self.comments) - 1: self.currentComment = len(self.comments) - 1
+			text = u'%s번 댓글:' % (self.currentComment + 1)  + self.comments.keys()[self.currentComment]
+			self.textCtrl2.SetValue(text)
+
 
 	def DeleteComment(self):
-		index = self.listCtrl.GetFocusedItem()
-		if index == -1: return
-		key = self.listCtrl.GetItemText(index)
+		if self.currentComment < 0: return
+		key = self.comments.keys()[self.currentComment]
 		deleteUrl = self.comments[key]
 		if not deleteUrl: return
+
 		if not MsgBox(self, u'댓글 삭제', u'다음 댓글을 삭제할까요?\n' + key, True): return
 		self.Get(deleteUrl)
 		self.GetInfo(self.currentArticle)
@@ -180,24 +216,22 @@ class ViewPanel(wx.Panel, Utility, Http):
 			except:
 				pass
 
-		content = self.textCtrl2.GetValue()
+		content = self.textCtrl3.GetValue()
 		if not content: return MsgBox(self, u'오류', u'댓글 편집창이 비어 있습니다.')
 		paramDict['wr_content'] = content.encode('utf-8')
 		self.Post(selector, paramDict)
 		if self.response.getheader('Location'):
-			self.textCtrl2.Clear()
-			self.Play('up.wav')
+			self.textCtrl3.Clear()
 			self.GetInfo(self.currentArticle)
+			self.currentComment = len(self.comments) - 1
 			self.Display()
-			n = self.listCtrl.GetItemCount()
-			if n == 0: return
-			self.listCtrl.Focus(n-1)
-			self.listCtrl.Select(n-1)
-			self.listCtrl.SetFocus()
+			self.textCtrl2.SetFocus()
+			self.Play('up.wav')
+
 		else:
 			self.GetInfo(self.currentArticle)
 			MsgBox(self, u'경고', u'댓글을 올리는 속도가 너무 빠릅니다. 잠시 후에 다시 실행해 주세요.')
-			self.textCtrl2.SetFocus()
+			self.textCtrl3.SetFocus()
 
 
 
@@ -233,7 +267,6 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def BackToBBS(self, e):
-		self.parent.bbs.Display()
 		self.parent.bbs.Show()
 		self.parent.bbs.SetFocus()
 		self.parent.bbs.Play('pagePrev.wav')
@@ -278,7 +311,10 @@ class ViewPanel(wx.Panel, Utility, Http):
 	def OnDownFiles(self, e):
 		if not self.files: return
 		downloadFolder = self.ReadReg('downloadfolder')
-		if not downloadFolder : downloadFolder = 'c:\\'
+		if not downloadFolder : 
+			shell = Dispatch('Wscript.Shell')
+			downloadFolder = shell.SpecialFolders('MyDocuments')
+
 		for fileName, (descript, url) in self.files.items():
 			filePath = os.path.join(downloadFolder, fileName)
 			p = Process(target=Download, args=(filePath, url, self.parent.transQueue))

@@ -42,12 +42,10 @@ class WritePanel(wx.Panel, Http):
 
 	def OnCancel(self, e):
 		if self.before == 'view':
-			self.parent.view.Display()
 			self.parent.view.Show()
 			self.parent.view.SetFocus()
 			self.parent.view.Play('pagePrev.wav')
 		elif self.before == 'bbs':
-			self.parent.bbs.Display()
 			self.parent.bbs.Show()
 			self.parent.bbs.SetFocus()
 			self.parent.bbs.Play('pagePrev.wav')
@@ -56,10 +54,6 @@ class WritePanel(wx.Panel, Http):
 
 	def GetInfo(self, url):
 		self.Get(url)
-
-		title = self.soup.head.title.string
-		self.parent.SetTitle(title + ' - ' + self.parent.mainTitle)
-
 		self.dInfo.clear()
 		# hidden 속성을 dInfo 사전에 저장한다.
 		hiddens = self.soup('input', type='hidden')
@@ -108,9 +102,9 @@ class WritePanel(wx.Panel, Http):
 			self.Post('/bbs/write_update.php', self.dInfo)
 			url = self.response.getheader('Location')
 			self.parent.bbs.GetList(self.Url(url))
+			self.parent.bbs.Display()
 			self.parent.bbs.Play('up.wav')
 
-		self.parent.bbs.Display()
 		self.parent.bbs.Show()
 		self.parent.bbs.listCtrl.SetFocus()
 		if self.before == 'view': self.parent.view.Destroy()

@@ -26,7 +26,6 @@ class MenuPanel(wx.Panel, Utility, Http):
 
 	def Display(self, menucode='top'):
 		if not menucode in self.dTree: return
-		self.parent.SetTitle(self.dTree[menucode][0] + ' - ' + self.parent.mainTitle)
 		(title, mommy, submenu) = self.dTree[menucode]
 		if submenu.startswith('/'):
 			self.Hide()

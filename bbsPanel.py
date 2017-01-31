@@ -6,6 +6,7 @@ from http import *
 from util import *
 from viewPanel import ViewPanel
 from writePanel import WritePanel
+import urllib
 
 
 
@@ -66,6 +67,8 @@ class BBSPanel(wx.Panel, Utility, Http):
 		elif key == wx.WXK_DOWN:
 			self.KeyDownArrow()
 			e.Skip()
+		elif e.GetModifiers() == wx.MOD_CONTROL and key == ord('F'):
+			self.Searching()
 
 		else:
 			e.Skip()
@@ -92,9 +95,6 @@ class BBSPanel(wx.Panel, Utility, Http):
 				pass
 
 	def Display(self):
-		title = self.soup.head.title.string
-		self.parent.SetTitle(title + ' - ' + self.parent.mainTitle)
-
 		self.listCtrl.DeleteAllItems()
 		for text, author, href in self.lArticles:
 			index = self.listCtrl.InsertStringItem(sys.maxint, text)
@@ -105,6 +105,16 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 	def NextPage(self):
 		if not self.soup: return self.Play('beep.wav')
+
+		# 다음 검색 링크가 있으면 곧바로 작동
+		links = self.soup('a')
+		for link in links:
+			if link.getText() == u'다음검색':
+				self.GetList(link['href'])
+				self.Display()
+				self.Play('pageNext.wav')
+				return
+
 		currentPage = self.soup.find('strong', attrs={'class':'pg_current'})
 		if currentPage is None: return self.Play('beep.wav')
 		nextPage = currentPage.next.next.next.next.next
@@ -118,6 +128,16 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 	def PreviousPage(self):
 		if not self.soup: return self.Play('beep.wav')
+
+		# 이전검색 링크가 있으면 곧바로 작동
+		links = self.soup('a')
+		for link in links:
+			if link.getText() == u'이전검색':
+				self.GetList(link['href'])
+				self.Display()
+				self.Play('pageNext.wav')
+				return
+
 		currentPage = self.soup.find('strong', attrs={'class':'pg_current'})
 		if currentPage is None or currentPage.getText() == '1': return self.Play('beep.wav')
 		prevPage = currentPage.previous.previous.previous.previous.previous
@@ -139,7 +159,6 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 
 	def BackToMenu(self, e):
-		self.parent.menu.Display(self.parent.menu.currentMenu)
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')
@@ -150,4 +169,33 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.parent.menu.Display('top')
 		self.parent.menu.Show()
 		self.Destroy()
+
+
+	def Searching(self):
+		searchDialog = Search(self)
+		if searchDialog.ShowModal() == wx.ID_CANCEL: 
+			searchDialog.Destroy()
+			return
+
+		sfl = searchDialog.sfl[searchDialog.choice.GetStringSelection()]
+		stx = searchDialog.textCtrl.GetValue()
+		searchDialog.Destroy()			
+		if not stx: return
+		stx = stx.encode('utf-8', 'ignore')
+
+		form = self.soup.find('form', attrs={'name': 'fsearch'})
+		if form is None: return
+		hiddens = form('input', type='hidden')
+		if hiddens is None: return
+		d = {}
+		for h in hiddens:
+			d[h['name']] = h['value']
+		d['sfl'] = sfl
+		d['stx'] = stx
+		params = urllib.urlencode(d)
+		self.GetList('/bbs/board.php?' + params)
+		self.Display()
+		self.Play('search.wav')
+
+
 

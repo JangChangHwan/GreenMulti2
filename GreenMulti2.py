@@ -6,9 +6,13 @@ from util import *
 from multiprocessing import Process, Queue, freeze_support
 from threading import Thread
 from collections import OrderedDict
-import sys
+from win32com.client import Dispatch
+import sys, os
 import time
 import datetime
+from subprocess import Popen
+
+
 
 
 class GreenMulti2(wx.Frame, Utility):
@@ -35,6 +39,15 @@ class GreenMulti2(wx.Frame, Utility):
 		downloadFolderMI = wx.MenuItem(fileMenu, -1, u"다운로드 폴더 변경")
 		fileMenu.AppendItem(downloadFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnDownloadFolder, downloadFolderMI)
+
+		openFolderMI = wx.MenuItem(fileMenu, -1, u"다운로드 폴더 열기\tCtrl+O")
+		fileMenu.AppendItem(openFolderMI)
+		self.Bind(wx.EVT_MENU, self.OnOpenFolder, openFolderMI)
+
+		shortcutMI = wx.MenuItem(fileMenu, -1, u'바탕화면 바로가기 추가/제거')
+		fileMenu.AppendItem(shortcutMI)
+		self.Bind(wx.EVT_MENU, self.OnShortcut, shortcutMI)
+
 
 		transInfoMI = wx.MenuItem(fileMenu, -1, u"파일 전송 정보\tCtrl+J")
 		fileMenu.AppendItem(transInfoMI)
@@ -103,8 +116,7 @@ class GreenMulti2(wx.Frame, Utility):
 
 			params = {'url': 'http%3A%2F%2Fweb.kbuwel.or.kr', 'mb_id': kbuid, 'mb_password': kbupw}
 			self.menu.Post('/bbs/login_check.php', params)
-
-			if self.menu.response.getheader('Location') and 'bo_table=notice' in self.menu.response.getheader('Location'):
+			if self.menu.response.getheader('Location'):
 				self.cookies = self.menu.cookies = self.menu.response.getheader('set-cookie')
 			else:
 				self.Logout(u'넓은마을 로그인에 실패했습니다. 아이디와 비밀번호를 정확하게 입력해 주세요.')
@@ -139,6 +151,9 @@ class GreenMulti2(wx.Frame, Utility):
 
 	def OnDownloadFolder(self, e):
 		folder = self.ReadReg('downloadfolder')
+		if not folder: 
+			shell = Dispatch('WScript.Shell')
+			folder = shell.SpecialFolders('MyDocuments')
 		dirDialog = wx.DirDialog(self, u'다운로드 폴더 선택', folder)
 		if dirDialog.ShowModal() == wx.ID_OK:
 			self.WriteReg('downloadfolder', dirDialog.GetPath())
@@ -152,6 +167,35 @@ class GreenMulti2(wx.Frame, Utility):
 		infoDialog.ShowModal()
 
 
+	def OnOpenFolder(self, e):
+		downFolder = self.ReadReg('downloadfolder')
+		if not downFolder: 
+			shell = Dispatch('WScript.Shell')
+			downFolder = shell.SpecialFolders('MyDocuments')
+		if type(downFolder) == unicode: downFolder = downFolder.encode('euc-kr', 'ignore')
+		Popen(['explorer.exe', downFolder])
+
+
+	def OnShortcut(self, e):
+		shell = Dispatch('WScript.Shell')
+		desktop = shell.SpecialFolders('Desktop')
+		path = os.path.join(desktop, 'GreenMulti2.lnk')
+		target = sys.argv[0]
+
+		if os.path.exists(path):
+			os.remove(path)
+			MsgBox(self, u'알림', u'바탕화면에서 바로가기를 제거했습니다.')
+		else:
+			shortcut = shell.CreateShortcut(path)
+			shortcut.Targetpath = target
+			shortcut.WindowStyle = 1
+			shortcut.HotKey = 'CTRL+ALT+G'
+			shortcut.IconLocation = 'notepad.exe, 0'
+			shortcut.Description = 'GreenMulti2'
+			shortcut.WorkingDirectory = os.path.dirname(sys.argv[0])
+			shortcut.Save()
+			MsgBox(self, u'알림', u'바탕화면에 바로가기를 만들었습니다.')
+
 
 
 def BetaTest():
@@ -164,5 +208,5 @@ if __name__ == '__main__':
 	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티2 Beta1')
+	GreenMulti2(u'초록멀티2 Beta3')
 	app.MainLoop()

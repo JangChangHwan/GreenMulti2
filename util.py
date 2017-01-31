@@ -383,3 +383,22 @@ class TransferInfo(wx.Dialog):
 		self.listCtrl.Focus(index)
 		self.listCtrl.Select(index)
 
+
+
+class Search(wx.Dialog):
+
+	sfl = {u'전체': 'wr_subject||wr_content||mb_id||wr_name', u'제목': 'wr_subject', u'내용': 'wr_content', u'제목+내용': 'wr_subject||wr_content', u'아이디': 'mb_id', u'글쓴이': 'wr_name'}
+
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, u'게시판 검색', wx.DefaultPosition, wx.Size(340, 100))
+
+		wx.StaticText(self, -1, u'검색대상', (10, 10), (100, 20))
+		self.choice = wx.Choice(self, -1, (120, 10), (210, 20), [u'전체', u'제목', u'내용', u'제목+내용', u'아이디', u'글쓴이'])
+		wx.StaticText(self, -1, u'검색어', (10, 40), (100, 20))
+		self.textCtrl = wx.TextCtrl(self, -1, '', (120, 40), (210, 20))
+
+		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인', (120, 70), (100, 20))
+		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소', (230, 70), (100, 20))
+
+		self.choice.SetSelection(0)
+		self.textCtrl.SetFocus()

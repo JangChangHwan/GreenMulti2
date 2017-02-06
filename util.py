@@ -336,6 +336,7 @@ def TransferManager(dFileInfo, q):
 		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
 
 
+
 class TransferInfo(wx.Dialog):
 	def __init__(self, parent):
 		wx.Dialog.__init__(self, parent, -1, u'파일 전송 정보', wx.DefaultPosition, (400, 400))
@@ -374,6 +375,9 @@ class TransferInfo(wx.Dialog):
 			row = self.listCtrl.InsertStringItem(sys.maxint, fileName)
 			self.listCtrl.SetStringItem(row, 1, mode)
 			ratio = 100.0 * downSize / totalSize
+			if ratio == 100: 
+				self.parent.dFileInfo.pop(fileName)
+				continue
 			self.listCtrl.SetStringItem(row, 2, u'%0.2f %%' % ratio)
 			speed = downSize / 1024.0 / 1024.0 / elapsedTime 
 			self.listCtrl.SetStringItem(row, 3, u'%0.2f MB/sec' % speed)
@@ -382,6 +386,7 @@ class TransferInfo(wx.Dialog):
 
 		self.listCtrl.Focus(index)
 		self.listCtrl.Select(index)
+
 
 
 

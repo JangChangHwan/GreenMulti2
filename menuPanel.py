@@ -5,6 +5,8 @@ from util import *
 from http import *
 from bbsPanel import BBSPanel
 from viewPanel import ViewPanel
+from mailWritePanel import MailWritePanel
+
 
 
 class MenuPanel(wx.Panel, Utility, Http):
@@ -27,7 +29,12 @@ class MenuPanel(wx.Panel, Utility, Http):
 	def Display(self, menucode='top'):
 		if not menucode in self.dTree: return
 		(title, mommy, submenu) = self.dTree[menucode]
-		if submenu.startswith('/'):
+		if 'write.php?bo_table=rmail' in submenu:
+			self.Hide()
+			self.parent.wmail = MailWritePanel(self.parent, submenu, before='menu')
+			return False
+
+		elif submenu.startswith('/'):
 			self.Hide()
 			self.parent.bbs = BBSPanel(self.parent, submenu)
 			return False

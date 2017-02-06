@@ -6,6 +6,7 @@ from http import *
 from util import *
 from viewPanel import ViewPanel
 from writePanel import WritePanel
+from mailWritePanel import MailWritePanel
 import urllib
 
 
@@ -22,7 +23,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (480, 480), wx.LC_REPORT | wx.LC_SINGLE_SEL)
 		self.listCtrl.InsertColumn(0, u'제목', width=400)
-		self.listCtrl.InsertColumn(1, u'작성자', width=80)
+		self.listCtrl.InsertColumn(1, u'이름', width=80)
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
 
@@ -80,19 +81,29 @@ class BBSPanel(wx.Panel, Utility, Http):
 		if link is None: return
 		href = self.Url(link['href'])
 		self.Hide()
-		self.parent.write = WritePanel(self.parent, href, before='bbs')
+		if 'write.php?bo_table=rmail' in href:
+			self.parent.wmail = MailWritePanel(self.parent, href, before='bbs')
+		else:
+			self.parent.write = WritePanel(self.parent, href, before='bbs')
+
+
+
 
 
 	def GetList(self, selector):
 		self.lArticles = []
 		self.Get(self.Url(selector))
 
-		links = self.soup('a', href=re.compile('wr_id='))
-		for link in links:
-			try:
-				self.lArticles.append((link.getText(), link.parent.nextSibling.nextSibling.string, link['href']))
-			except:
-				pass
+		trs = self.soup.find('tbody')('tr')
+		for tr in trs:
+			title = name = href = ''
+			tdSubs = tr('td', attrs={'class': re.compile('td_subject')})
+			title = tdSubs[0].a.getText()
+			href = tdSubs[0].a['href']
+			tdNames = tr('td', attrs={'class': re.compile('td_name')})
+			name = tdNames[0].getText()
+			self.lArticles.append((title, name, href))
+
 
 	def Display(self):
 		self.listCtrl.DeleteAllItems()

@@ -6,6 +6,7 @@ from http import *
 from util import *
 from collections import OrderedDict
 from writePanel import WritePanel
+from mailWritePanel import MailWritePanel
 from multiprocessing import Process, Queue
 from win32com.client import Dispatch
 
@@ -56,11 +57,6 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.AltPgUp.Hide()
 		self.AltPgUp.Bind(wx.EVT_BUTTON, self.OnPrevArticle)
 
-		self.GetInfo(url)
-		self.Display()
-		self.textCtrl1.SetFocus()
-		self.Play('pageNext.wav')
-
 		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
 			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL), 
 			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
@@ -68,7 +64,12 @@ class ViewPanel(wx.Panel, Utility, Http):
 			])
 
 		self.SetAcceleratorTable(accel)
-		
+	
+
+		self.GetInfo(url)
+		self.Display()
+		self.textCtrl1.SetFocus()
+		self.Play('pageNext.wav')
 
 
 	def OnTextCtrl1KeyDown(self, e):
@@ -255,7 +256,10 @@ class ViewPanel(wx.Panel, Utility, Http):
 		if link is None: return
 		href = link['href']
 		self.Hide()
-		self.parent.write = WritePanel(self.parent, href, before='view')
+		if 'write.php?bo_table=rmail' in href:
+			self.parent.wmail = MailWritePanel(self.parent, href, before='view')
+		else:
+			self.parent.write = WritePanel(self.parent, href, before='view')
 
 
 	def EditArticle(self):

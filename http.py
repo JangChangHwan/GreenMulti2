@@ -140,6 +140,7 @@ class Download(Process, Http, Utility):
 			if self.response.length == 0: break
 
 		f.close()
+		self.q.put((fileName, mode, totalSize, totalSize, elapsedTime))
 		self.Play('down.wav', async=False)
 
 
@@ -191,6 +192,7 @@ class Upload(Process, Utility, Http):
 			upSize = endPart
 
 		self.response = h.getresponse()
+		self.q.put((self.filename, 'upload', fileSize, fileSize, elapsedTime))
 		self.Play('up.wav', async=False)
 
 

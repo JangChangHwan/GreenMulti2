@@ -162,7 +162,6 @@ class GreenMulti2(wx.Frame, Utility):
 
 
 	def OnTransInfo(self, e):
-		if not self.dFileInfo: return MsgBox(self, u'알림', u'파일 전송 정보가 없습니다.')
 		infoDialog = TransferInfo(self)
 		infoDialog.ShowModal()
 

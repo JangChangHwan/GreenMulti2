@@ -7,7 +7,7 @@ from util import *
 from collections import OrderedDict
 
 
-class WritePanel(wx.Panel, Http):
+class MailWritePanel(wx.Panel, Http):
 
 	dInfo = OrderedDict()
 	before = ''
@@ -18,11 +18,14 @@ class WritePanel(wx.Panel, Http):
 		self.parent = parent
 		self.before = before
 
-		wx.StaticText(self, -1, u'제목', (10, 10), (100, 20))
-		self.textCtrl1 = wx.TextCtrl(self, -1, '', (120, 10), (370, 20))
+		wx.StaticText(self, -1, u'받는사람', (10, 10), (100, 20))
+		self.receiver = wx.TextCtrl(self, -1, '', (120, 10), (370, 20))
 
-		wx.StaticText(self, -1, u'본문', (10, 40), (100, 20))
-		self.textCtrl2 = wx.TextCtrl(self, -1, '', (120, 40), (370, 420), wx.TE_MULTILINE)
+		wx.StaticText(self, -1, u'제목', (10, 40), (100, 20))
+		self.textCtrl1 = wx.TextCtrl(self, -1, '', (120, 40), (370, 20))
+
+		wx.StaticText(self, -1, u'본문', (10, 70), (100, 20))
+		self.textCtrl2 = wx.TextCtrl(self, -1, '', (120, 70), (370, 390), wx.TE_MULTILINE)
 
 		self.btnFile = wx.Button(self, -1, u'첨부파일', (10, 470), (100, 20))
 		self.btnFile.Bind(wx.EVT_BUTTON, self.OnButtonFile)
@@ -34,7 +37,7 @@ class WritePanel(wx.Panel, Http):
 		self.buttonCancel.Bind(wx.EVT_BUTTON, self.OnCancel)
 
 		self.GetInfo(url)
-		self.textCtrl1.SetFocus()
+		self.receiver.SetFocus()
 		# 단축키 지정
 		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
 		self.SetAcceleratorTable(accel)
@@ -49,6 +52,11 @@ class WritePanel(wx.Panel, Http):
 			self.parent.bbs.Show()
 			self.parent.bbs.SetFocus()
 			self.parent.bbs.Play('pagePrev.wav')
+		elif self.before == 'menu':
+			self.parent.menu.Show()
+			self.parent.menu.SetFocus()
+			self.parent.menu.Play('pagePrev.wav')
+
 		self.Destroy()
 
 
@@ -60,8 +68,13 @@ class WritePanel(wx.Panel, Http):
 		hiddens = form('input', type='hidden')
 		for h in hiddens:
 			self.dInfo[h['name']] = h['value']
+
+		# 받는사람 추가
+		recv = self.soup.find('input', id='wr_email')
+		self.dInfo[recv['name']] = recv['value']
+
 		# 제목 추가
-		title = self.soup.find('input', type='text')
+		title = self.soup.find('input', id='wr_subject')
 		self.dInfo[title['name']] = title['value']
 		self.textCtrl1.SetValue(title['value'])
 		# 본문 추가
@@ -84,14 +97,16 @@ class WritePanel(wx.Panel, Http):
 
 
 	def OnButtonOK(self, e): 
+		receiver = 		title = self.receiver.GetValue()
+		self.dInfo['wr_email'] = receiver
 		title = self.textCtrl1.GetValue()
 		self.dInfo['wr_subject'] = title
 		body = self.textCtrl2.GetValue()
 		self.dInfo['wr_content'] = body
 		path = self.path.GetValue()
 
-		if not title or not body: 
-			return MsgBox(self, u'오류', u'제목과 본문은 필수입력사항입니다.')
+		if not receiver or not title or not body: 
+			return MsgBox(self, u'오류', u'받는사람, 제목, 본문은 필수입력사항입니다.')
 
 		# 첨부파일이 없다면 post로 보내고 있으면 multipartPost로 보낸다.
 		if path and os.path.exists(path):
@@ -101,14 +116,17 @@ class WritePanel(wx.Panel, Http):
 
 		else:
 			self.Post('/bbs/write_update.php', self.dInfo)
-			url = self.response.getheader('Location')
-			self.parent.bbs.GetList(self.Url(url))
-			self.parent.bbs.Display()
-			self.parent.bbs.Play('up.wav')
+			self.parent.menu.Play('up.wav')
 
-		self.parent.bbs.Show()
-		self.parent.bbs.listCtrl.SetFocus()
-		if self.before == 'view': self.parent.view.Destroy()
+		if self.before == 'view':
+			self.parent.view.Show()
+			self.parent.view.SetFocus()
+		elif self.before == 'bbs': 
+			self.parent.bbs.Show()
+			self.parent.bbs.listCtrl.SetFocus()
+		elif self.before == 'menu':
+			self.parent.menu.Show()
+			self.parent.menu.listCtrl.SetFocus()
+
 		self.Destroy()
-
 

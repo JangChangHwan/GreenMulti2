@@ -30,10 +30,12 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 		self.textCtrl1 = wx.TextCtrl(self, -1, '', (10, 10), (480, 280), wx.TE_MULTILINE | wx.TE_READONLY)
 		self.textCtrl1.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl1KeyDown)
+		self.textCtrl1.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu1)
 
 		# 댓글 표시창
 		self.textCtrl2 = wx.TextCtrl(self, -1, '', wx.Point(10, 300), wx.Size(480, 140), wx.TE_READONLY | wx.TE_MULTILINE)
 		self.textCtrl2.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl2KeyDown)
+		self.textCtrl2.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu2)
 
 		self.lbl = wx.StaticText(self, -1, u'댓글', (10, 450), (40, 40))
 		self.textCtrl3 = wx.TextCtrl(self, -1, '', (60, 450), (380, 40), wx.TE_MULTILINE)
@@ -72,6 +74,47 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.Play('pageNext.wav')
 
 
+	def OnPopupMenu1(self, e):
+		self.result = ''
+		menuList = [u'뒤로\tEscape, Alt+Left', 
+			u'작성\t&W', 
+			u'수정\t&E',
+			u'삭제\tDelete', 
+			u'다음 게시물로\tAlt+PageDown',
+			u'이전 게시물로\tAlt+PageUp',
+			u'다운로드\t&D',
+			u'초기화면\tCtrl+Home', 
+			u'코드 바로가기\tCtrl+G',
+			u'다운로드 폴더 열기\tCtrl+O',
+			u'파일 전송 정보\tCtrl+J'
+			]
+		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
+
+		if self.result == u'뒤로\tEscape, Alt+Left':
+			self.BackToBBS(e) 
+		elif self.result == u'작성\t&W':
+			self.WriteArticle()
+		elif self.result == u'수정\t&E':
+			self.EditArticle()
+		elif self.result == u'삭제\tDelete':
+			self.DeleteArticle()
+		elif self.result == u'다음 게시물로\tAlt+PageDown':
+			self.OnNextArticle(e)
+		elif self.result == u'이전 게시물로\tAlt+PageUp':
+			self.OnPrevArticle(e)
+		elif self.result == u'다운로드\t&D':
+			self.OnDownFiles()
+		elif self.result == u'초기화면\tCtrl+Home':
+			self.parent.OnHome(e)
+		elif self.result == u'코드 바로가기\tCtrl+G':
+			self.parent.OnGoTo(e)
+		elif self.result == u'다운로드 폴더 열기\tCtrl+O':
+			self.parent.OnOpenFolder(e)
+		elif self.result == u'파일 전송 정보\tCtrl+J':
+			self.parent.OnTransInfo(e)
+
+
+
 	def OnTextCtrl1KeyDown(self, e):
 		key = e.GetKeyCode()
 		if key == ord('W'):
@@ -81,7 +124,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 		elif key == wx.WXK_DELETE:
 			self.DeleteArticle()
 		elif key == ord('D'):
-			self.OnDownFiles('')
+			self.OnDownFiles()
 
 		else:
 			e.Skip()
@@ -149,6 +192,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 			for link in fileLinks:
 				descript = ' '.join(link.getText().split())
 				self.files[link.strong.getText()] = (descript, link['href'])
+
 		# 본문 내용 추출
 		div = self.soup.find('div', id='bo_v_con')
 		self.content = self.GetTextFromTag(div)
@@ -167,6 +211,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 			key = name + body
 			key = re.sub(r'[\t ]+', ' ', key)
 			self.comments[key] = delete
+
+		self.parent.CheckMailMemo(self.parent, self.soup)
 
 
 	def Display(self):
@@ -309,18 +355,58 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.GetInfo(url)
 		self.Display()
 		self.textCtrl1.SetFocus()
-		self.Play('pageNext.wav')
+		self.Play('pagePrev.wav')
 
 
-	def OnDownFiles(self, e):
+	def OnDownFiles(self):
 		if not self.files: return
+
+		if len(self.parent.dFileInfo) >= self.parent.limit: return MsgBox(self, u'알림', u'동시에 전송할 수 있는 파일이 수는 %s개입니다.\n전송을 취소하거나 전송을 마칠 때까지 기다려 주세요.' % self.parent.limit)
+
 		downloadFolder = self.ReadReg('downloadfolder')
 		if not downloadFolder : 
 			shell = Dispatch('Wscript.Shell')
 			downloadFolder = shell.SpecialFolders('MyDocuments')
 
 		for fileName, (descript, url) in self.files.items():
+			if fileName in self.parent.dFileInfo and self.parent.dFileInfo[fileName][0] == 'download': 
+				self.Play('pass.wav', async=False)
+				continue
 			filePath = os.path.join(downloadFolder, fileName)
 			p = Process(target=Download, args=(filePath, url, self.parent.transQueue))
 			p.start()
-			self.parent.lTransferProcess.append(p)
+			self.parent.dProcess[(fileName, 'download')] = p
+
+
+	def OnPopupMenu2(self, e):
+		self.result = ''
+		menuList = [u'뒤로\tEscape, Alt+Left', 
+			u'삭제\tDelete', 
+			u'다음 댓글\tPageDown',
+			u'이전 댓글\tPageUp',
+			u'초기화면\tCtrl+Home', 
+			u'코드 바로가기\tCtrl+G',
+			u'다운로드 폴더 열기\tCtrl+O',
+			u'파일 전송 정보\tCtrl+J'
+			]
+		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
+
+		if self.result == u'뒤로\tEscape, Alt+Left':
+			self.BackToBBS(e) 
+		elif self.result == u'삭제\tDelete':
+			self.DeleteComment()
+		elif self.result == u'다음 댓글\tPageDown':
+			self.NextComment()
+		elif self.result == u'이전 댓글\tPageUp':
+			self.PrevComment()
+		elif self.result == u'다운로드\t&D':
+			self.OnDownFiles()
+		elif self.result == u'초기화면\tCtrl+Home':
+			self.parent.OnHome(e)
+		elif self.result == u'코드 바로가기\tCtrl+G':
+			self.parent.OnGoTo(e)
+		elif self.result == u'다운로드 폴더 열기\tCtrl+O':
+			self.parent.OnOpenFolder(e)
+		elif self.result == u'파일 전송 정보\tCtrl+J':
+			self.parent.OnTransInfo(e)
+

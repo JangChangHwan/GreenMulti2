@@ -9,6 +9,7 @@ from util import *
 import re
 import time
 from winsound import Beep
+from win32com.client import Dispatch
 
 
 class Http(object):
@@ -69,8 +70,8 @@ class Http(object):
 			return '/bbs' + url[1:]
 		elif url.startswith('board.php') or url.startswith('download.php'):
 			return '/bbs/' + url
-		elif url.startswith('http://han.kbuwel.or.kr'):
-			return url.replace('http://han.kbuwel.or.kr', '')
+		elif url.startswith('http://web.kbuwel.or.kr'):
+			return url.replace('http://web.kbuwel.or.kr', '')
 		else:
 			return url
 
@@ -95,8 +96,10 @@ class Download(Process, Http, Utility):
 		self.url = url
 		self.q = q
 		r = self.LoginCheck()
-		if r: self.run()
-
+		if r: 
+			self.run()
+		else:
+			self.Play('error.wav', async=False)
 
 
 	def LoginCheck(self):
@@ -130,6 +133,7 @@ class Download(Process, Http, Utility):
 		startTime = time.time()
 		fileName = os.path.basename(self.filePath)
 		f = open(self.filePath, 'wb')
+		self.q.put((fileName, mode, totalSize, 0, 0))
 
 		while True:
 			part = self.response.read(chunck)
@@ -211,3 +215,40 @@ class Upload(Process, Utility, Http):
 			return False
 		except:
 			return False
+
+
+class DownloadFromList(Utility, Http):
+
+	files = {}
+
+	def __init__(self, parent, url):
+		Http.__init__(self, parent)
+		Utility.__init__(self)
+		self.parent = parent
+
+		self.files.clear()
+
+		self.Get(url)
+
+		downloadFolder = self.ReadReg('downloadfolder')
+		if not downloadFolder : 
+			shell = Dispatch('Wscript.Shell')
+			downloadFolder = shell.SpecialFolders('MyDocuments')
+
+		fileLinks = self.soup('a', href=re.compile('download.php'))
+		if fileLinks is not None:
+			for link in fileLinks:
+				descript = ' '.join(link.getText().split())
+				self.files[link.strong.getText()] = (descript, link['href'])
+
+		if not self.files: return
+
+		for fileName, (descript, fileUrl) in self.files.items():
+			if fileName in self.parent.dFileInfo and self.parent.dFileInfo[fileName][0] == 'download': 
+				self.Play('pass.wav', async=False)
+				continue
+
+			filePath = os.path.join(downloadFolder, fileName)
+			p = Process(target=Download, args=(filePath, fileUrl, self.parent.transQueue))
+			p.start()
+			self.parent.dProcess[(fileName, 'download')] = p

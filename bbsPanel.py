@@ -25,7 +25,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.listCtrl.InsertColumn(0, u'제목', width=400)
 		self.listCtrl.InsertColumn(1, u'이름', width=80)
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
-
+		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
 
 		# ESC 키를 위한 더미
 		self.Cancel = wx.Button(self, wx.ID_CANCEL, u'닫기', (500, 500), (1,1))
@@ -38,6 +38,45 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.Display()
 		self.listCtrl.SetFocus()
 		self.Play('pageNext.wav')
+
+
+	def OnPopupMenu(self, e):
+		self.result = ''
+		menuList = [u'열기\tEnter',
+			u'뒤로\tEscape, Alt+Left', 
+			u'작성\t&W',
+u'다음 페이지로\tPageDown',
+			u'이전 페이지로\tPageUp',
+			u'다운로드\t&D',
+			u'검색\tCtrl+F',
+			u'초기화면\tCtrl+Home', 
+			u'코드 바로가기\tCtrl+G',
+			u'다운로드 폴더 열기\tCtrl+O',
+			u'파일 전송 정보\tCtrl+J'
+			]
+		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
+		if self.result == u'열기\tEnter':
+			self.OpenArticle()
+		elif self.result == u'뒤로\tEscape, Alt+Left':
+			self.BackToMenu(e)
+		elif self.result == u'작성\t&W':
+			self.WriteArticle()
+		elif self.result == u'다음 페이지로\tPageDown':
+			self.NextPage()
+		elif self.result == 			u'이전 페이지로\tPageUp':
+			self.PreviousPage()
+		elif self.result == u'다운로드\t&D':
+			self.DownFile()
+		elif self.result == u'검색\tCtrl+F':
+			self.Searching()
+		elif self.result == u'초기화면\tCtrl+Home':
+			self.parent.OnHome(e)
+		elif self.result == u'코드 바로가기\tCtrl+G':
+			self.parent.OnGoTo(e)
+		elif self.result == u'다운로드 폴더 열기\tCtrl+O':
+			self.parent.OnOpenFolder(e)
+		elif self.result == u'파일 전송 정보\tCtrl+J':
+			self.parent.OnTransInfo(e)
 
 
 	def KeyUpArrow(self):
@@ -60,6 +99,8 @@ class BBSPanel(wx.Panel, Utility, Http):
 			self.PreviousPage()
 		elif key == wx.WXK_RETURN:
 			self.OpenArticle()
+		elif key == ord('D'):
+			self.DownFile()
 		elif key == ord('W'):
 			self.WriteArticle()
 		elif key == wx.WXK_UP:
@@ -95,14 +136,18 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.Get(self.Url(selector))
 
 		trs = self.soup.find('tbody')('tr')
+		if len(trs) == 1 and trs[0].td['class'][0] == 'empty_table': return
+
 		for tr in trs:
 			title = name = href = ''
 			tdSubs = tr('td', attrs={'class': re.compile('td_subject')})
 			title = tdSubs[0].a.getText()
 			href = tdSubs[0].a['href']
 			tdNames = tr('td', attrs={'class': re.compile('td_name')})
-			name = tdNames[0].getText()
+			if tdNames: name = tdNames[0].getText()
 			self.lArticles.append((title, name, href))
+
+		self.parent.CheckMailMemo(self.parent, self.soup)
 
 
 	def Display(self):
@@ -176,12 +221,6 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.Destroy()
 
 
-	def Home(self):
-		self.parent.menu.Display('top')
-		self.parent.menu.Show()
-		self.Destroy()
-
-
 	def Searching(self):
 		searchDialog = Search(self)
 		if searchDialog.ShowModal() == wx.ID_CANCEL: 
@@ -208,5 +247,15 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.Display()
 		self.Play('search.wav')
 
+
+
+	def DownFile(self):
+		index = self.listCtrl.GetFocusedItem()
+		if index == -1: return self.Play('beep.wav')
+
+		if len(self.parent.dFileInfo) >= self.parent.limit: return MsgBox(self, u'알림', u'동시에 전송할 수 있는 파일이 수는 %s개입니다.\n전송을 취소하거나 전송을 마칠 때까지 기다려 주세요.' % self.parent.limit)
+
+		url = self.lArticles[index][2]
+		down = DownloadFromList(self.parent, url)
 
 

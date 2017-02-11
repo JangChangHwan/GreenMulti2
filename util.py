@@ -8,6 +8,7 @@ import os
 import _winreg
 import wx
 from collections import OrderedDict
+import time
 
 
 
@@ -93,24 +94,6 @@ class Utility(object):
 		except:
 			return ''
 
-	def ParamSplit(self, url):
-# url 주소 문자열을 유니코드로 바꾸고 base_url 문자열과 매개변수가 담긴 사전으로 반환한다.
-		d = {}
-		base_url, params = url.split("?")
-		for kvp in params.split("&"):
-			if not kvp or not ("=" in kvp): continue
-			k, v = kvp.split("=")
-			if not k: continue
-			d[k] = v
-		return (base_url, d)
-
-	def ParamJoin(self, d, enc = True):
-# 다시 url로 조립 물론 urlencode를  사용할지를 선택
-		if enc: 
-			params = urllib.urlencode(d)
-		else:
-			params = "&".join(["%s=%s" % (k, v) for k, v in d.items()])
-		return params
 
 
 
@@ -334,12 +317,14 @@ def TransferManager(dFileInfo, q):
 		fileName, mode, totalSize, downSize, elapsedTime = q.get()
 		if mode == 'exit': return
 		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
+		if totalSize == downSize: dFileInfo.pop(fileName)
 
 
 
-class TransferInfo(wx.Dialog):
+class TransferInfo(wx.Dialog, Utility):
 	def __init__(self, parent):
 		wx.Dialog.__init__(self, parent, -1, u'파일 전송 정보', wx.DefaultPosition, (400, 400))
+		Utility.__init__(self)
 		self.parent = parent
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (380, 380), wx.LC_REPORT | wx.LC_SINGLE_SEL)
@@ -362,9 +347,24 @@ class TransferInfo(wx.Dialog):
 			self.LoadFileInfo()
 		elif key == wx.WXK_ESCAPE:
 			self.OnClose(e)
+		elif key == wx.WXK_DELETE:
+			self.Stop()
 
 		else:
 			e.Skip()
+
+	def Stop(self):
+		index = self.listCtrl.GetFocusedItem()
+		if index == -1: return
+		fileName = self.listCtrl.GetItemText(index, 0)
+		mode = self.listCtrl.GetItemText(index, 1)
+		if not MsgBox(self, u'경고', u'다음 파일 전송을 취소할까요?\n파일이름 : %s\n전송모드 : %s' % (fileName, mode), True): return
+		p = self.parent.dProcess[(fileName, mode)]
+		p.terminate()
+		self.parent.dFileInfo.pop(fileName)
+		self.Play('delete.wav')
+		self.LoadFileInfo()
+
 
 	def LoadFileInfo(self):
 		index = self.listCtrl.GetFocusedItem()
@@ -375,11 +375,11 @@ class TransferInfo(wx.Dialog):
 			row = self.listCtrl.InsertStringItem(sys.maxint, fileName)
 			self.listCtrl.SetStringItem(row, 1, mode)
 			ratio = 100.0 * downSize / totalSize
-			if ratio == 100: 
-				self.parent.dFileInfo.pop(fileName)
-				continue
 			self.listCtrl.SetStringItem(row, 2, u'%0.2f %%' % ratio)
-			speed = downSize / 1024.0 / 1024.0 / elapsedTime 
+			if elapsedTime:
+				speed = downSize / 1024.0 / 1024.0 / elapsedTime 
+			else:
+				speed = 0
 			self.listCtrl.SetStringItem(row, 3, u'%0.2f MB/sec' % speed)
 			size = totalSize / 1024.0 / 1024.0
 			self.listCtrl.SetStringItem(row, 4, u'%0.2f MB' % size)

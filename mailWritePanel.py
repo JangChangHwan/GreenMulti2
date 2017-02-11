@@ -97,7 +97,7 @@ class MailWritePanel(wx.Panel, Http):
 
 
 	def OnButtonOK(self, e): 
-		receiver = 		title = self.receiver.GetValue()
+		receiver = 		self.receiver.GetValue()
 		self.dInfo['wr_email'] = receiver
 		title = self.textCtrl1.GetValue()
 		self.dInfo['wr_subject'] = title
@@ -112,7 +112,7 @@ class MailWritePanel(wx.Panel, Http):
 		if path and os.path.exists(path):
 			p = Process(target=Upload, args=('/bbs/write_update.php', self.dInfo, {'bf_file[]': path}, self.parent.transQueue))
 			p.start()
-			self.parent.lTransferProcess.append(p)
+			self.parent.dProcess[(os.path.basename(path), 'upload')] = p
 
 		else:
 			self.Post('/bbs/write_update.php', self.dInfo)

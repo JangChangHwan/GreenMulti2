@@ -97,7 +97,7 @@ class WritePanel(wx.Panel, Http):
 		if path and os.path.exists(path):
 			p = Process(target=Upload, args=('/bbs/write_update.php', self.dInfo, {'bf_file[]': path}, self.parent.transQueue))
 			p.start()
-			self.parent.lTransferProcess.append(p)
+			self.parent.dProcess[(os.path.basename(path), 'upload')] = p
 
 		else:
 			self.Post('/bbs/write_update.php', self.dInfo)
@@ -108,7 +108,7 @@ class WritePanel(wx.Panel, Http):
 
 		self.parent.bbs.Show()
 		self.parent.bbs.listCtrl.SetFocus()
-		if self.before == 'view': self.parent.view.Destroy()
+		if self.before == 'view': self.parent.ClosePanels(['view'])
 		self.Destroy()
 
 

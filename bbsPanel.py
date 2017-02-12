@@ -14,25 +14,20 @@ import urllib
 class BBSPanel(wx.Panel, Utility, Http):
 
 	lArticles = []
+	currentList = ''
 
 	def __init__(self, parent, url):
 		wx.Panel.__init__(self, parent, -1, (0, 0), (500, 500))
 		Http.__init__(self, parent)
 		Utility.__init__(self)
 		self.parent = parent
+		self.currentList = url
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (480, 480), wx.LC_REPORT | wx.LC_SINGLE_SEL)
 		self.listCtrl.InsertColumn(0, u'제목', width=400)
 		self.listCtrl.InsertColumn(1, u'이름', width=80)
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
-
-		# ESC 키를 위한 더미
-		self.Cancel = wx.Button(self, wx.ID_CANCEL, u'닫기', (500, 500), (1,1))
-		self.Cancel.Hide()
-		self.Cancel.Bind(wx.EVT_BUTTON, self.BackToMenu)
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
-		self.SetAcceleratorTable(accel)
 
 		self.GetList(url)
 		self.Display()
@@ -43,7 +38,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def OnPopupMenu(self, e):
 		self.result = ''
 		menuList = [u'열기\tEnter',
-			u'뒤로\tEscape, Alt+Left', 
+			u'뒤로\tESC', 
 			u'작성\t&W',
 u'다음 페이지로\tPageDown',
 			u'이전 페이지로\tPageUp',
@@ -57,8 +52,8 @@ u'다음 페이지로\tPageDown',
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 		if self.result == u'열기\tEnter':
 			self.OpenArticle()
-		elif self.result == u'뒤로\tEscape, Alt+Left':
-			self.BackToMenu(e)
+		elif self.result == u'뒤로\tESC':
+			self.BackToMenu()
 		elif self.result == u'작성\t&W':
 			self.WriteArticle()
 		elif self.result == u'다음 페이지로\tPageDown':
@@ -93,7 +88,11 @@ u'다음 페이지로\tPageDown',
 
 	def OnKeyDown(self, e):
 		key = e.GetKeyCode()
-		if key == wx.WXK_PAGEDOWN:
+		if key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
+			self.BackToMenu()
+		elif key == wx.WXK_F5:
+			self.Refresh()
+		elif key == wx.WXK_PAGEDOWN:
 			self.NextPage()
 		elif key == wx.WXK_PAGEUP:
 			self.PreviousPage()
@@ -115,6 +114,15 @@ u'다음 페이지로\tPageDown',
 		else:
 			e.Skip()
 
+
+	def Refresh(self):
+		index = self.listCtrl.GetFocusedItem()
+		if index == -1: index = 0
+		self.GetList(self.currentList)
+		self.Display()
+		self.listCtrl.Select(index)
+		self.listCtrl.Select(index)
+		self.Play('refresh.wav')
 
 
 	def WriteArticle(self):
@@ -151,6 +159,7 @@ u'다음 페이지로\tPageDown',
 
 
 	def Display(self):
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.listCtrl.DeleteAllItems()
 		for text, author, href in self.lArticles:
 			index = self.listCtrl.InsertStringItem(sys.maxint, text)
@@ -177,6 +186,7 @@ u'다음 페이지로\tPageDown',
 		if nextPage.name != 'a': return self.Play('beep.wav')
 		href = nextPage['href']
 		if href.startswith('./'): href = '/bbs' + href[1:]
+		self.currentList = href
 		self.GetList(href)
 		self.Display()
 		self.Play('pageNext.wav')
@@ -201,6 +211,7 @@ u'다음 페이지로\tPageDown',
 			prevPage = currentPage.previous.previous.previous.previous.previous.previous.previous
 		href = prevPage['href']
 		if href.startswith('./'): href = '/bbs' + href[1:]
+		self.currentList = href
 		self.GetList(href)
 		self.Display()
 		self.Play('pagePrev.wav')
@@ -214,7 +225,7 @@ u'다음 페이지로\tPageDown',
 		self.parent.view = ViewPanel(self.parent, url)
 
 
-	def BackToMenu(self, e):
+	def BackToMenu(self):
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')
@@ -223,30 +234,28 @@ u'다음 페이지로\tPageDown',
 
 	def Searching(self):
 		searchDialog = Search(self)
-		if searchDialog.ShowModal() == wx.ID_CANCEL: 
-			searchDialog.Destroy()
-			return
+		if searchDialog.ShowModal() == wx.ID_OK: 
+			sfl = searchDialog.sfl[searchDialog.choice.GetStringSelection()]
+			stx = searchDialog.textCtrl.GetValue()
+			searchDialog.Destroy()			
+			if not stx: return
+			stx = stx.encode('utf-8', 'ignore')
 
-		sfl = searchDialog.sfl[searchDialog.choice.GetStringSelection()]
-		stx = searchDialog.textCtrl.GetValue()
+			form = self.soup.find('form', attrs={'name': 'fsearch'})
+			if form is None: return
+			hiddens = form('input', type='hidden')
+			if hiddens is None: return
+			d = {}
+			for h in hiddens:
+				d[h['name']] = h['value']
+			d['sfl'] = sfl
+			d['stx'] = stx
+			params = urllib.urlencode(d)
+			self.GetList('/bbs/board.php?' + params)
+			self.Display()
+			self.Play('search.wav')
+
 		searchDialog.Destroy()			
-		if not stx: return
-		stx = stx.encode('utf-8', 'ignore')
-
-		form = self.soup.find('form', attrs={'name': 'fsearch'})
-		if form is None: return
-		hiddens = form('input', type='hidden')
-		if hiddens is None: return
-		d = {}
-		for h in hiddens:
-			d[h['name']] = h['value']
-		d['sfl'] = sfl
-		d['stx'] = stx
-		params = urllib.urlencode(d)
-		self.GetList('/bbs/board.php?' + params)
-		self.Display()
-		self.Play('search.wav')
-
 
 
 	def DownFile(self):

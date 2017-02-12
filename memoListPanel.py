@@ -29,13 +29,6 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
 
-		# ESC 키를 위한 더미
-		self.Cancel = wx.Button(self, wx.ID_CANCEL, u'닫기', (500, 500), (1,1))
-		self.Cancel.Hide()
-		self.Cancel.Bind(wx.EVT_BUTTON, self.BackToMenu)
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
-		self.SetAcceleratorTable(accel)
-
 		self.GetList(url)
 		self.Display()
 		self.listCtrl.SetFocus()
@@ -58,6 +51,8 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == wx.WXK_RETURN:
 			self.OpenMemo()
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
+			self.BackToMenu()
 		elif key == ord('W'):
 			self.WriteMemo()
 		elif key == wx.WXK_UP:
@@ -96,10 +91,12 @@ class MemoListPanel(wx.Panel, Utility, Http):
 			title = tds[1].a.getText()
 			href = tds[1].a['href']
 			state = tds[3].getText()
+			state = self.Date(state)
 			self.lArticles.append((state, name, title, href))
 
 
 	def Display(self):
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.listCtrl.DeleteAllItems()
 		for state, author, text, href in self.lArticles:
 			index = self.listCtrl.InsertStringItem(sys.maxint, state)
@@ -118,7 +115,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.parent.mview = MemoViewPanel(self.parent, url)
 
 
-	def BackToMenu(self, e):
+	def BackToMenu(self):
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')
@@ -127,7 +124,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 	def OnPopupMenu(self, e):
 		self.result = ''
 		menuList = [u'열기\tEnter',
-			u'뒤로\tEscape, Alt+Left', 
+			u'뒤로\tESC', 
 			u'작성\t&W',
 			u'초기화면\tCtrl+Home', 
 			u'코드 바로가기\tCtrl+G',
@@ -138,8 +135,8 @@ class MemoListPanel(wx.Panel, Utility, Http):
 
 		if self.result == u'열기\tEnter':
 			self.OpenMemo()
-		elif self.result == u'뒤로\tEscape, Alt+Left':
-			self.BackToMenu(e)
+		elif self.result == u'뒤로\tESC':
+			self.BackToMenu()
 		elif self.result == u'작성\t&W':
 			self.WriteMemo()
 		elif self.result == u'초기화면\tCtrl+Home':

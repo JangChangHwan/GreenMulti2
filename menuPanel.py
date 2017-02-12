@@ -31,6 +31,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 
 	def Display(self, menucode='top'):
 		if not menucode in self.dTree: return
+
 		(title, mommy, submenu) = self.dTree[menucode]
 		if 'write.php?bo_table=rmail' in submenu:
 			self.Hide()
@@ -51,6 +52,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 			self.parent.bbs = BBSPanel(self.parent, submenu)
 			return False
 
+		self.parent.sb.SetStatusText(title, 0)
 		self.currentMenu = menucode
 		self.listCtrl.DeleteAllItems()
 		for c in submenu.split('|'):
@@ -69,7 +71,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == wx.WXK_RETURN:
 			self.KeyReturn()
-		elif key == wx.WXK_ESCAPE or (e.GetModifiers() == wx.MOD_ALT and key == wx.WXK_LEFT): 
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK: 
 			self.KeyEscape()
 		elif key == wx.WXK_UP:
 			self.KeyUpArrow()
@@ -111,7 +113,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 	def OnPopupMenu(self, e):
 		self.result = ''
 		menuList = [u'열기\tEnter',
-			u'뒤로\tEscape, Alt+Left', 
+			u'뒤로\tESC', 
 			u'초기화면\tCtrl+Home', 
 			u'코드 바로가기\tCtrl+G',
 			u'다운로드 폴더 열기\tCtrl+O',
@@ -120,7 +122,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 		if self.result == u'열기\tEnter':
 			self.KeyReturn()
-		elif self.result == u'뒤로\tEscape, Alt+Left':
+		elif self.result == u'뒤로\tESC':
 			self.KeyEscape()
 		elif self.result == u'초기화면\tCtrl+Home':
 			self.parent.OnHome(e)

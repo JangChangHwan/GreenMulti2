@@ -33,7 +33,7 @@ class MemoWritePanel(wx.Panel, Http):
 		self.receiver.SetFocus()
 
 		# 단축키 지정
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL)])
 		self.SetAcceleratorTable(accel)
 
 		self.GetInfo(self.url)
@@ -41,6 +41,7 @@ class MemoWritePanel(wx.Panel, Http):
 
 	def GetInfo(self, url):
 		self.Get(self.Url(url))		
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		recv = self.soup.find('input', id='me_recv_mb_id')
 		self.receiver.SetValue(recv['value'])
 		text = self.soup.find('textarea', id='me_memo')

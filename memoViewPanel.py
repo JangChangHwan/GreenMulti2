@@ -22,11 +22,6 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		self.textCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.textCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
 
-		# ESC 키를 위한 더미
-		self.Cancel = wx.Button(self, wx.ID_CANCEL, u'닫기', (500, 500), (1,1))
-		self.Cancel.Hide()
-		self.Cancel.Bind(wx.EVT_BUTTON, self.BackToMemoList)
-
 		# 알트 다음글 넘어가는 키: 페이지다운
 		idAltPgDn = wx.NewId()
 		self.AltPgDn = wx.Button(self, idAltPgDn, u'다음글', (500, 500), (1,1))
@@ -39,9 +34,7 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		self.AltPgUp.Hide()
 		self.AltPgUp.Bind(wx.EVT_BUTTON, self.OnPrevMemo)
 
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
-			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL), 
-			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
+		accel = wx.AcceleratorTable([(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
 			(wx.ACCEL_ALT, wx.WXK_PAGEUP, idAltPgUp)
 			])
 
@@ -58,6 +51,8 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == ord('W'):
 			self.WriteMemo()
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
+			self.BackToMemoList()
 		elif key == ord('R'):
 			self.ReplyMemo()
 		elif key == wx.WXK_DELETE:
@@ -73,9 +68,11 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		# 쪽지 내용 추출
 		article = self.soup.find('article', id='memo_view_contents')
 		self.content = self.GetTextFromTag(article)
+		self.content = self.Date(self.content)
 
 
 	def Display(self):
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.textCtrl.Clear()
 		self.textCtrl.SetValue(self.content)
 
@@ -115,7 +112,7 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		self.parent.wmemo = MemoWritePanel(self.parent, href, before='mview')
 
 
-	def BackToMemoList(self, e):
+	def BackToMemoList(self):
 		self.parent.mlist.Show()
 		self.parent.mlist.SetFocus()
 		self.parent.mlist.Play('pagePrev.wav')
@@ -160,7 +157,7 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 
 	def OnPopupMenu(self, e):
 		self.result = ''
-		menuList = [u'뒤로\tEscape, Alt+Left', 
+		menuList = [u'뒤로\tESC', 
 			u'작성\t&W', 
 			u'답장\t&R',
 			u'삭제\tDelete', 
@@ -173,8 +170,8 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 			]
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 
-		if self.result == u'뒤로\tEscape, Alt+Left':
-			self.BackToMemoList(e) 
+		if self.result == u'뒤로\tESC':
+			self.BackToMemoList() 
 		elif self.result == u'작성\t&W':
 			self.WriteMemo()
 		elif self.result == u'답장\t&R':

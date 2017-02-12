@@ -95,6 +95,7 @@ class Download(Process, Http, Utility):
 		self.filePath = filePath
 		self.url = url
 		self.q = q
+		self.Play('down_start.wav', async=False)
 		r = self.LoginCheck()
 		if r: 
 			self.run()
@@ -127,7 +128,6 @@ class Download(Process, Http, Utility):
 			self.Play('pass.wav', async=False)
 			return
 
-		self.Play('down_start.wav', async=False)
 		downSize = 0
 		chunck = 1024 * 256
 		startTime = time.time()

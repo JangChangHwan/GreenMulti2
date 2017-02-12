@@ -39,13 +39,11 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 		self.lbl = wx.StaticText(self, -1, u'댓글', (10, 450), (40, 40))
 		self.textCtrl3 = wx.TextCtrl(self, -1, '', (60, 450), (380, 40), wx.TE_MULTILINE)
+		self.textCtrl3.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl3KeyDown)
+
 		self.button = wx.Button(self, -1, u'저장', (350, 450), (40, 40))
 		self.button.Bind(wx.EVT_BUTTON, self.OnButton)
-
-		# ESC 키를 위한 더미
-		self.Cancel = wx.Button(self, wx.ID_CANCEL, u'닫기', (500, 500), (1,1))
-		self.Cancel.Hide()
-		self.Cancel.Bind(wx.EVT_BUTTON, self.BackToBBS)
+		self.button.Bind(wx.EVT_KEY_DOWN, self.OnOtherKeyDown)
 
 		# 알트 다음글 넘어가는 키: 페이지다운
 		idAltPgDn = wx.NewId()
@@ -59,12 +57,9 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.AltPgUp.Hide()
 		self.AltPgUp.Bind(wx.EVT_BUTTON, self.OnPrevArticle)
 
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
-			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL), 
-			(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
+		accel = wx.AcceleratorTable([(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
 			(wx.ACCEL_ALT, wx.WXK_PAGEUP, idAltPgUp)
 			])
-
 		self.SetAcceleratorTable(accel)
 	
 
@@ -74,9 +69,24 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.Play('pageNext.wav')
 
 
+	def OnTextCtrl3KeyDown(self, e):
+		key = e.GetKeyCode()
+		if key == wx.WXK_ESCAPE: 
+			self.BackToBBS()
+		else:
+			e.Skip()
+
+
+	def OnOtherKeyDown(self, e):
+		key = e.GetKeyCode()
+		if key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
+			self.BackToBBS()
+		else:
+			e.Skip()
+
 	def OnPopupMenu1(self, e):
 		self.result = ''
-		menuList = [u'뒤로\tEscape, Alt+Left', 
+		menuList = [u'뒤로\tESC', 
 			u'작성\t&W', 
 			u'수정\t&E',
 			u'삭제\tDelete', 
@@ -90,8 +100,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 			]
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 
-		if self.result == u'뒤로\tEscape, Alt+Left':
-			self.BackToBBS(e) 
+		if self.result == u'뒤로\tESC':
+			self.BackToBBS() 
 		elif self.result == u'작성\t&W':
 			self.WriteArticle()
 		elif self.result == u'수정\t&E':
@@ -119,6 +129,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == ord('W'):
 			self.WriteArticle()
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
+			self.BackToBBS()
 		elif key == ord('E'):
 			self.EditArticle()
 		elif key == wx.WXK_DELETE:
@@ -135,6 +147,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == wx.WXK_DELETE:
 			self.DeleteComment()
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK: 
+			self.BackToBBS()
 		elif key == wx.WXK_PAGEDOWN:
 			self.NextComment()
 		elif key == wx.WXK_PAGEUP:
@@ -185,6 +199,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 		# 글쓴이 등등 정보 추출
 		infoSection = self.soup.find('section', id='bo_v_info')
 		self.info = infoSection.getText()
+		self.info = self.Date(self.info)
+
 		# 첨부파일 추출
 		self.files.clear()
 		fileLinks = self.soup('a', href=re.compile('download.php'))
@@ -209,6 +225,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 			if reply.footer.ul.li: 
 				delete = reply.footer.ul.li.nextSibling.nextSibling.a['href']
 			key = name + body
+			key = self.Date(key)
 			key = re.sub(r'[\t ]+', ' ', key)
 			self.comments[key] = delete
 
@@ -216,6 +233,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.textCtrl1.Clear()
 		self.textCtrl2.Clear()
 
@@ -316,7 +334,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 		self.parent.write = WritePanel(self.parent, href, before='view')
 
 
-	def BackToBBS(self, e):
+	def BackToBBS(self):
 		self.parent.bbs.Show()
 		self.parent.bbs.SetFocus()
 		self.parent.bbs.Play('pagePrev.wav')
@@ -380,7 +398,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 	def OnPopupMenu2(self, e):
 		self.result = ''
-		menuList = [u'뒤로\tEscape, Alt+Left', 
+		menuList = [u'뒤로\tESC', 
 			u'삭제\tDelete', 
 			u'다음 댓글\tPageDown',
 			u'이전 댓글\tPageUp',
@@ -391,8 +409,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 			]
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 
-		if self.result == u'뒤로\tEscape, Alt+Left':
-			self.BackToBBS(e) 
+		if self.result == u'뒤로\tESC':
+			self.BackToBBS() 
 		elif self.result == u'삭제\tDelete':
 			self.DeleteComment()
 		elif self.result == u'다음 댓글\tPageDown':

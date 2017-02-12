@@ -39,7 +39,7 @@ class MailWritePanel(wx.Panel, Http):
 		self.GetInfo(url)
 		self.receiver.SetFocus()
 		# 단축키 지정
-		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)])
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL)])
 		self.SetAcceleratorTable(accel)
 		
 
@@ -62,6 +62,7 @@ class MailWritePanel(wx.Panel, Http):
 
 	def GetInfo(self, url):
 		self.Get(url)
+		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.dInfo.clear()
 		# hidden 속성을 dInfo 사전에 저장한다.
 		form = self.soup.find('form', id='fwrite')

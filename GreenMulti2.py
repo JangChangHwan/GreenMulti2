@@ -36,6 +36,10 @@ class GreenMulti2(wx.Frame, Utility):
 		menuBar = wx.MenuBar()
 		fileMenu = wx.Menu()
 
+		helpMI = wx.MenuItem(fileMenu, -1, u"도움말\tF1")
+		fileMenu.AppendItem(helpMI)
+		self.Bind(wx.EVT_MENU, self.OnHelp, helpMI)
+
 		self.loginMI = wx.MenuItem(fileMenu, -1, u"로그인\tCtrl+L")
 		fileMenu.AppendItem(self.loginMI)
 		self.Bind(wx.EVT_MENU, self.OnLogin, self.loginMI)
@@ -75,13 +79,20 @@ class GreenMulti2(wx.Frame, Utility):
 		menuBar.Append(fileMenu, u'파일(&F)')
 		self.SetMenuBar(menuBar)
 
+		# 상태표시줄
+		self.sb = wx.StatusBar(self, -1)
+		self.sb.SetFieldsCount(2)
+		self.SetStatusBar(self.sb)
+
+
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 
 		self.menu = MenuPanel(self)
 
+
 		self.Show()
 
-		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue))
+		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue, self.sb))
 		th.start()
 
 		self.Login()
@@ -216,9 +227,15 @@ class GreenMulti2(wx.Frame, Utility):
 
 
 	def OnGoTo(self, e):
-		code = InputBox(self, u'코드 바로가기', u'코드 : ')
-		if not code: return
-		if not code in self.dTree: return MsgBox(self, u'오류', u'존재하지 않는 바로가기 코드입니다.')
+		cm = CodeMove(self)
+		if cm.ShowModal() == wx.ID_CANCEL:
+			cm.Destroy()
+			return
+
+		code = cm.combo.GetValue()
+		cm.Destroy()
+
+		if not code or not code in self.dTree: return
 		self.ClosePanels()
 		if code != 'top': self.menu.Display(self.dTree[code][1])
 		self.menu.Display(code)
@@ -259,6 +276,10 @@ class GreenMulti2(wx.Frame, Utility):
 		ancestor.memoCount = iMemo
 
 
+	def OnHelp(self, e):
+		HelpBox(self)
+
+
 
 def BetaTest():
 	limitDate = datetime.date(2017, 5, 31)
@@ -270,5 +291,5 @@ if __name__ == '__main__':
 	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티2 Beta4')
+	GreenMulti2(u'초록멀티2 Beta5')
 	app.MainLoop()

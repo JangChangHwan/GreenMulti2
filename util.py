@@ -1,7 +1,6 @@
 ﻿# coding: utf-8
 # 함수모음 util.py
 
-import pickle
 import sys
 import winsound
 import os
@@ -9,6 +8,7 @@ import _winreg
 import wx
 from collections import OrderedDict
 import time
+import re
 
 
 
@@ -23,10 +23,16 @@ class Utility(object):
 
 	def LoadTreeMenu(self):
 		try:
-			with open('treemenu.dat', 'rb') as f:
-				self.dTree = pickle.load(f)
+			with open('KBUMenu.dat', 'rb') as f:
+				data = f.read()
+				menus = data.split('\r\n')
+				for m in menus:
+					m = unicode(m, 'utf-8')
+					if m.startswith('#')  or not '\t' in m: continue
+					code, name, parent, sub = m.split('\t')
+					self.dTree[code] = [name, parent, sub]
 		except:
-			self.dTree['top'] = (u'초기메뉴', '', 'green|guide|mail|bbs|computer|potion|blindnews||magazin|pds')
+			sys.exit()
 
 
 	def SaveTreeMenu(self):
@@ -94,8 +100,12 @@ class Utility(object):
 		except:
 			return ''
 
-
-
+	def Date(self, s):
+		# 년-월-일 시:분 --> x월 x일 x시 x분으로 변경
+		s = re.sub(r'(\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d)', u' \\2월 \\3일 \\4시 \\5분', s)
+		# 01 02 03 등을 1, 2, 3으로 변경
+		s = re.sub(r'\b(0)(\d)', r'\2', s)
+		return s
 
 
 def InputBox(parent, title, text, pwd=False):
@@ -311,12 +321,17 @@ class MultilineEditor(wx.Dialog):
 		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(&N)', (290, 170), (100, 20))
 
 
-def TransferManager(dFileInfo, q):
+def TransferManager(dFileInfo, q, sb):
 	"""q = filename, mode, totalSize, downSize, elapsedTime."""
 	while True:
 		fileName, mode, totalSize, downSize, elapsedTime = q.get()
 		if mode == 'exit': return
 		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
+		if downSize > 0:
+			percent = int(100.0 * downSize / totalSize)
+			msg = u'%s퍼센트 %s %s (남은 전송: %s개)' % (percent, mode, fileName, len(dFileInfo))
+			if percent == 100: msg = ''
+			sb.SetStatusText(msg, 1)
 		if totalSize == downSize: dFileInfo.pop(fileName)
 
 
@@ -362,6 +377,7 @@ class TransferInfo(wx.Dialog, Utility):
 		p = self.parent.dProcess[(fileName, mode)]
 		p.terminate()
 		self.parent.dFileInfo.pop(fileName)
+		self.parent.sb.SetStatusText('', 1)
 		self.Play('delete.wav')
 		self.LoadFileInfo()
 
@@ -395,15 +411,69 @@ class Search(wx.Dialog):
 	sfl = {u'전체': 'wr_subject||wr_content||mb_id||wr_name', u'제목': 'wr_subject', u'내용': 'wr_content', u'제목+내용': 'wr_subject||wr_content', u'아이디': 'mb_id', u'글쓴이': 'wr_name'}
 
 	def __init__(self, parent):
-		wx.Dialog.__init__(self, parent, -1, u'게시판 검색', wx.DefaultPosition, wx.Size(340, 100))
+		wx.Dialog.__init__(self, parent, -1, u'게시판 검색', wx.DefaultPosition, wx.Size(340, 130))
 
-		wx.StaticText(self, -1, u'검색대상', (10, 10), (100, 20))
-		self.choice = wx.Choice(self, -1, (120, 10), (210, 20), [u'전체', u'제목', u'내용', u'제목+내용', u'아이디', u'글쓴이'])
-		wx.StaticText(self, -1, u'검색어', (10, 40), (100, 20))
-		self.textCtrl = wx.TextCtrl(self, -1, '', (120, 40), (210, 20))
+		wx.StaticText(self, -1, u'검색어', (10, 10), (100, 30))
+		self.textCtrl = wx.TextCtrl(self, -1, '', (120, 10), (210, 30))
 
-		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인', (120, 70), (100, 20))
-		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소', (230, 70), (100, 20))
+		wx.StaticText(self, -1, u'검색대상', (10, 50), (100, 30))
+		self.choice = wx.Choice(self, -1, (120, 50), (210, 30), [u'전체', u'제목', u'내용', u'제목+내용', u'아이디', u'글쓴이'])
+
+		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인', (120, 90), (100, 30))
+		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(ESC)', (230, 90), (100, 30))
 
 		self.choice.SetSelection(0)
 		self.textCtrl.SetFocus()
+
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_NORMAL, wx.WXK_RETURN, wx.ID_OK)])
+		self.SetAcceleratorTable(accel)
+
+
+
+
+class CodeMove(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, u'코드 바로가기', wx.DefaultPosition, wx.Size(340, 90))
+		self.parent = parent
+
+		wx.StaticText(self, -1, u'코드', (10, 10), (100, 30))
+		self.combo = wx.ComboBox(self, -1, "", (120, 10), (210, 30), self.parent.dTree.keys(), wx.CB_DROPDOWN | wx.CB_SORT | wx.CB_READONLY)
+
+		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인(Enter)', (120, 50), (100, 30))
+		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(ESC)', (230, 50), (100, 30))
+		self.combo.SetFocus()
+
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), (wx.ACCEL_NORMAL, wx.WXK_RETURN, wx.ID_OK)])
+		self.SetAcceleratorTable(accel)
+
+
+
+class HelpBox(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, u'초록멀티2 도움말', wx.DefaultPosition, (600, 500))
+
+		self.textCtrl = wx.TextCtrl(self, -1, self.LoadHelp(), (10, 10), (580, 480), wx.TE_MULTILINE | wx.TE_READONLY)
+
+		self.close = wx.Button(self, wx.ID_CANCEL, u'닫기', (600, 500), (1,1))
+		self.close.Hide()
+		self.close.Bind(wx.EVT_BUTTON, self.OnClose)
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL)])
+		self.SetAcceleratorTable(accel)
+
+
+
+		self.ShowModal()
+
+	def LoadHelp(self):
+		txt = ''
+		if os.path.exists('readme.txt'):
+			with open('readme.txt', 'rb') as f:
+				txt = f.read()
+				txt = unicode(txt, 'utf-8')
+		else:
+			txt = u'도움말이 담긴 readme.txt 파일이 없습니다.'
+		return txt
+
+	def OnClose(self, e):
+			self.Destroy()
+

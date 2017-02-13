@@ -34,8 +34,15 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		self.AltPgUp.Hide()
 		self.AltPgUp.Bind(wx.EVT_BUTTON, self.OnPrevMemo)
 
+		self.BackTo = wx.Button(self, wx.ID_CANCEL, u'뒤로', (500, 500), (1,1))
+		self.BackTo.Hide()
+		self.BackTo.Bind(wx.EVT_BUTTON, self.BackToMemoList)
+
 		accel = wx.AcceleratorTable([(wx.ACCEL_ALT, wx.WXK_PAGEDOWN, idAltPgDn),
-			(wx.ACCEL_ALT, wx.WXK_PAGEUP, idAltPgUp)
+			(wx.ACCEL_ALT, wx.WXK_PAGEUP, idAltPgUp),
+			(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
+			(wx.ACCEL_NORMAL, wx.WXK_BACK, wx.ID_CANCEL), 
+			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)
 			])
 
 		self.SetAcceleratorTable(accel)
@@ -51,8 +58,6 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == ord('W'):
 			self.WriteMemo()
-		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
-			self.BackToMemoList()
 		elif key == ord('R'):
 			self.ReplyMemo()
 		elif key == wx.WXK_DELETE:
@@ -112,7 +117,7 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		self.parent.wmemo = MemoWritePanel(self.parent, href, before='mview')
 
 
-	def BackToMemoList(self):
+	def BackToMemoList(self, e):
 		self.parent.mlist.Show()
 		self.parent.mlist.SetFocus()
 		self.parent.mlist.Play('pagePrev.wav')

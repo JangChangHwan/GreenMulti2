@@ -18,6 +18,6 @@ options = {
 setup(
 options = {"py2exe": options},
 zipfile = None, # append zip-archive to the executable
-console = ["GreenMulti2.py"]
+windows = ["GreenMulti2.py"]
 )
 

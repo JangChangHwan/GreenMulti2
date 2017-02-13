@@ -30,9 +30,9 @@ class MenuPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self, menucode='top'):
-		if not menucode in self.dTree: return
+		if not menucode in self.parent.dTree: return
 
-		(title, mommy, submenu) = self.dTree[menucode]
+		(title, mommy, submenu) = self.parent.dTree[menucode]
 		if 'write.php?bo_table=rmail' in submenu:
 			self.Hide()
 			self.parent.wmail = MailWritePanel(self.parent, submenu, before='menu')
@@ -56,8 +56,8 @@ class MenuPanel(wx.Panel, Utility, Http):
 		self.currentMenu = menucode
 		self.listCtrl.DeleteAllItems()
 		for c in submenu.split('|'):
-			if not c in self.dTree: continue
-			(name, mother, sub) = self.dTree[c]
+			if not c in self.parent.dTree: continue
+			(name, mother, sub) = self.parent.dTree[c]
 			index = self.listCtrl.InsertStringItem(sys.maxint, name)
 			self.listCtrl.SetStringItem(index, 1, c)
 		self.listCtrl.Focus(0)
@@ -71,7 +71,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == wx.WXK_RETURN:
 			self.KeyReturn()
-		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK: 
+		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK or (e.GetModifiers() == wx.MOD_ALT and key == wx.WXK_LEFT): 
 			self.KeyEscape()
 		elif key == wx.WXK_UP:
 			self.KeyUpArrow()
@@ -92,7 +92,7 @@ class MenuPanel(wx.Panel, Utility, Http):
 
 
 	def KeyEscape(self):
-		mother = self.dTree[self.currentMenu][1]
+		mother = self.parent.dTree[self.currentMenu][1]
 		if not mother: return self.Play('beep.wav')
 		self.Display(mother)
 		self.Play('pagePrev.wav')

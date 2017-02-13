@@ -29,6 +29,17 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
 
+		self.BackTo = wx.Button(self, wx.ID_CANCEL, u'뒤로', (500, 500), (1,1))
+		self.BackTo.Hide()
+		self.BackTo.Bind(wx.EVT_BUTTON, self.BackToMenu)
+
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
+			(wx.ACCEL_NORMAL, wx.WXK_BACK, wx.ID_CANCEL), 
+			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)
+			])
+		self.SetAcceleratorTable(accel)
+
+
 		self.GetList(url)
 		self.Display()
 		self.listCtrl.SetFocus()
@@ -38,9 +49,8 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def OnPopupMenu(self, e):
 		self.result = ''
 		menuList = [u'열기\tEnter',
-			u'뒤로\tESC', 
 			u'작성\t&W',
-u'다음 페이지로\tPageDown',
+			u'다음 페이지로\tPageDown',
 			u'이전 페이지로\tPageUp',
 			u'다운로드\t&D',
 			u'검색\tCtrl+F',
@@ -52,8 +62,6 @@ u'다음 페이지로\tPageDown',
 		self.PopupMenu(MyMenu(self, menuList), e.GetPosition())
 		if self.result == u'열기\tEnter':
 			self.OpenArticle()
-		elif self.result == u'뒤로\tESC':
-			self.BackToMenu()
 		elif self.result == u'작성\t&W':
 			self.WriteArticle()
 		elif self.result == u'다음 페이지로\tPageDown':
@@ -88,9 +96,7 @@ u'다음 페이지로\tPageDown',
 
 	def OnKeyDown(self, e):
 		key = e.GetKeyCode()
-		if key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
-			self.BackToMenu()
-		elif key == wx.WXK_F5:
+		if key == wx.WXK_F5:
 			self.Refresh()
 		elif key == wx.WXK_PAGEDOWN:
 			self.NextPage()
@@ -143,8 +149,10 @@ u'다음 페이지로\tPageDown',
 		self.lArticles = []
 		self.Get(self.Url(selector))
 
-		trs = self.soup.find('tbody')('tr')
-		if len(trs) == 1 and trs[0].td['class'][0] == 'empty_table': return
+		tbody = self.soup.find('tbody')
+		if tbody is None: return
+		trs = tbody('tr')
+		if trs is None or (len(trs) == 1 and trs[0].td['class'][0] == 'empty_table'): return
 
 		for tr in trs:
 			title = name = href = ''
@@ -225,7 +233,7 @@ u'다음 페이지로\tPageDown',
 		self.parent.view = ViewPanel(self.parent, url)
 
 
-	def BackToMenu(self):
+	def BackToMenu(self, e):
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')

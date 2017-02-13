@@ -10,6 +10,7 @@ import re
 import time
 from winsound import Beep
 from win32com.client import Dispatch
+import zipfile
 
 
 class Http(object):
@@ -145,8 +146,33 @@ class Download(Process, Http, Utility):
 
 		f.close()
 		self.q.put((fileName, mode, totalSize, totalSize, elapsedTime))
+
+		if self.ReadReg('autodaisy'):
+			self.ConvertDaisy(self.filePath)
 		self.Play('down.wav', async=False)
 
+	def ConvertDaisy(self, filePath):
+		if not filePath.lower().endswith('.zip'): return
+		zfile = zipfile.ZipFile(filePath, 'r')
+		for fileName in zfile.namelist():
+			# .xml이 아니면 패스
+			if not fileName.lower().endswith('.xml'): continue
+			# .xml이면 파싱하여 데이지 파일인지 검사
+			xml = zfile.read(fileName)
+			soup = bs(xml, 'html.parser')
+			m = soup.find('dtbook', xmlns=re.compile(r'^http://www.daisy.org/'))
+			if m is None: continue
+			# 문자 추출
+			paras = soup('p')
+			if paras is None: continue
+			txt = u'\r\n'.join([p.getText() for p in paras])
+			txt = re.sub(r'[ ]{2,}', ' ', txt)
+			destPath = filePath[:-4] + '.txt'
+			with open(destPath, 'wb') as f:
+				f.write(txt.encode('utf-16', 'ignore'))
+				zfile.close()
+				os.remove(filePath)
+			break
 
 
 

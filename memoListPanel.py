@@ -28,6 +28,15 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
+		self.BackTo = wx.Button(self, wx.ID_CANCEL, u'뒤로', (500, 500), (1,1))
+		self.BackTo.Hide()
+		self.BackTo.Bind(wx.EVT_BUTTON, self.BackToMenu)
+
+		accel = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_ESCAPE, wx.ID_CANCEL), 
+			(wx.ACCEL_NORMAL, wx.WXK_BACK, wx.ID_CANCEL), 
+			(wx.ACCEL_ALT, wx.WXK_LEFT, wx.ID_CANCEL)
+			])
+		self.SetAcceleratorTable(accel)
 
 		self.GetList(url)
 		self.Display()
@@ -51,8 +60,6 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		key = e.GetKeyCode()
 		if key == wx.WXK_RETURN:
 			self.OpenMemo()
-		elif key == wx.WXK_ESCAPE or key == wx.WXK_BACK:
-			self.BackToMenu()
 		elif key == ord('W'):
 			self.WriteMemo()
 		elif key == wx.WXK_UP:
@@ -71,9 +78,6 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.Hide()
 		href = 'http://web.kbuwel.or.kr/plugin/ar.memo/memo_form.php'
 		self.parent.wmemo = MemoWritePanel(self.parent, href, before='mlist')
-
-
-
 
 
 	def GetList(self, selector):
@@ -115,7 +119,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.parent.mview = MemoViewPanel(self.parent, url)
 
 
-	def BackToMenu(self):
+	def BackToMenu(self, e):
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
 		self.parent.menu.Play('pagePrev.wav')

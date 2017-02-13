@@ -1,5 +1,6 @@
 ﻿# coding: utf-8
 
+import basicMenu
 import wx
 import re
 from menuPanel import *
@@ -12,12 +13,13 @@ import sys, os
 import time
 import datetime
 from subprocess import Popen
-
+import ctypes
 
 
 
 class GreenMulti2(wx.Frame, Utility):
 
+	dTree = OrderedDict()
 	cookies = ''
 	limit = 3
 	transQueue = Queue()
@@ -26,57 +28,63 @@ class GreenMulti2(wx.Frame, Utility):
 	dProcess = {}
 	mailCount = 0
 	memoCount = 0
+	tts = False
+	ttsName = ''
 
 	def __init__(self, title):
 		wx.Frame.__init__(self, None, -1, title, wx.DefaultPosition, (500, 500))
 		Utility.__init__(self)
 		self.mainTitle = title
+		self.LoadTreeMenu()
+		self.PrepareSpeaking()
 
 		# 메뉴바
 		menuBar = wx.MenuBar()
-		fileMenu = wx.Menu()
+		self.fileMenu = wx.Menu()
 
-		helpMI = wx.MenuItem(fileMenu, -1, u"도움말\tF1")
-		fileMenu.AppendItem(helpMI)
-		self.Bind(wx.EVT_MENU, self.OnHelp, helpMI)
-
-		self.loginMI = wx.MenuItem(fileMenu, -1, u"로그인\tCtrl+L")
-		fileMenu.AppendItem(self.loginMI)
+		self.loginMI = wx.MenuItem(self.fileMenu, -1, u"로그인\tCtrl+L")
+		self.fileMenu.AppendItem(self.loginMI)
 		self.Bind(wx.EVT_MENU, self.OnLogin, self.loginMI)
 
-		homeMI = wx.MenuItem(fileMenu, -1, u"초기화면으로\tAlt+Home")
-		fileMenu.AppendItem(homeMI)
+		contactMI = wx.MenuItem(self.fileMenu, -1, u"개발자에게 한마디")
+		self.fileMenu.AppendItem(contactMI)
+		self.Bind(wx.EVT_MENU, self.OnContact, contactMI)
+
+		homeMI = wx.MenuItem(self.fileMenu, -1, u"초기화면으로\tAlt+Home")
+		self.fileMenu.AppendItem(homeMI)
 		self.Bind(wx.EVT_MENU, self.OnHome, homeMI)
 
-		gotoMI = wx.MenuItem(fileMenu, -1, u"코드 바로가기\tCtrl+G")
-		fileMenu.AppendItem(gotoMI)
+		gotoMI = wx.MenuItem(self.fileMenu, -1, u"코드 바로가기\tCtrl+G")
+		self.fileMenu.AppendItem(gotoMI)
 		self.Bind(wx.EVT_MENU, self.OnGoTo, gotoMI)
 
-		downloadFolderMI = wx.MenuItem(fileMenu, -1, u"다운로드 폴더 변경")
-		fileMenu.AppendItem(downloadFolderMI)
+		downloadFolderMI = wx.MenuItem(self.fileMenu, -1, u"다운로드 폴더 변경")
+		self.fileMenu.AppendItem(downloadFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnDownloadFolder, downloadFolderMI)
 
-		openFolderMI = wx.MenuItem(fileMenu, -1, u"다운로드 폴더 열기\tCtrl+O")
-		fileMenu.AppendItem(openFolderMI)
+		openFolderMI = wx.MenuItem(self.fileMenu, -1, u"다운로드 폴더 열기\tCtrl+O")
+		self.fileMenu.AppendItem(openFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnOpenFolder, openFolderMI)
 
-		shortcutMI = wx.MenuItem(fileMenu, -1, u'바탕화면 바로가기 추가/제거')
-		fileMenu.AppendItem(shortcutMI)
+		shortcutMI = wx.MenuItem(self.fileMenu, -1, u'바탕화면 바로가기 추가/제거')
+		self.fileMenu.AppendItem(shortcutMI)
 		self.Bind(wx.EVT_MENU, self.OnShortcut, shortcutMI)
 
-
-		transInfoMI = wx.MenuItem(fileMenu, -1, u"파일 전송 정보\tCtrl+J")
-		fileMenu.AppendItem(transInfoMI)
+		transInfoMI = wx.MenuItem(self.fileMenu, -1, u"파일 전송 정보\tCtrl+J")
+		self.fileMenu.AppendItem(transInfoMI)
 		self.Bind(wx.EVT_MENU, self.OnTransInfo, transInfoMI)
 
-		self.xxxMI = wx.MenuItem(fileMenu, -1, u"메뉴관리")
-		fileMenu.AppendItem(self.xxxMI)
-		self.Bind(wx.EVT_MENU, self.OnMenuManage, self.xxxMI)
+		self.daisyMI = wx.MenuItem(self.fileMenu, -1, u"데이지 자동 변환", kind=wx.ITEM_CHECK)
+		self.Bind(wx.EVT_MENU, self.OnAutoDaisy, self.daisyMI)
 
-		quitMI = wx.MenuItem(fileMenu, -1, u"종료")
-		fileMenu.AppendItem(quitMI)
+		helpMI = wx.MenuItem(self.fileMenu, -1, u"도움말\tF1")
+		self.fileMenu.AppendItem(helpMI)
+		self.Bind(wx.EVT_MENU, self.OnHelp, helpMI)
+
+		quitMI = wx.MenuItem(self.fileMenu, -1, u"종료")
+		self.fileMenu.AppendItem(quitMI)
 		self.Bind(wx.EVT_MENU, self.OnClose, quitMI)
-		menuBar.Append(fileMenu, u'파일(&F)')
+		menuBar.Append(self.fileMenu, u'파일(&F)')
 		self.SetMenuBar(menuBar)
 
 		# 상태표시줄
@@ -137,6 +145,8 @@ class GreenMulti2(wx.Frame, Utility):
 			if not kbupw: kbupw = InputBox(self, u'넓은마을 로그인', u'비밀번호', pwd=1) 
 			if not kbuid or not kbupw: return MsgBox(self, u'알림', u'사용자 아이디와 비밀번호는 필수 입력사항입니다.')
 
+
+			# 넓마 로그인
 			params = {'url': 'http%3A%2F%2Fweb.kbuwel.or.kr', 'mb_id': kbuid, 'mb_password': kbupw}
 			self.menu.Post('/bbs/login_check.php', params)
 			if self.menu.response.getheader('Location'):
@@ -153,21 +163,26 @@ class GreenMulti2(wx.Frame, Utility):
 			title = self.menu.soup.head.title.getText()
 			if not title.startswith(u'오류')			:
 				self.limit = 100
+				self.fileMenu.InsertItem(9, self.daisyMI)
+				if self.ReadReg('autodaisy'): 			self.fileMenu.Check(self.daisyMI.GetId(), True)
 
 			self.menu.Get('/bbs/board.php?bo_table=free')
-			self.Play("start.wav", async=False)
 			self.CheckMailMemo(self, self.menu.soup)
-
+			if self.limit == 3: self.WriteReg('autodaisy', '')
+			self.Play("start.wav", async=False)
 #		except:
 #			pass
 
 
 	def Logout(self, msg=u'로그아웃하였습니다. 로그인 정보를 삭제했습니다.'):
 		try:
+			if self.limit == 100:
+				self.limit == 3
+				self.fileMenu.RemoveItem(self.daisyMI)
 			self.cookies = self.menu.cookies = ''
 			self.WriteReg('kbuid', '')
 			self.WriteReg('kbupw', '')
-			self.loginMI.SetText(u'로그인')
+			self.loginMI.SetText(u'로그인\tCtrl+L')
 			MsgBox(self, u'알림', msg)
 		except:
 			pass
@@ -256,11 +271,13 @@ class GreenMulti2(wx.Frame, Utility):
 	def CheckMailMemo(self, ancestor, soup):
 		iMail = iMemo = 0
 		mail = soup.find('a', title=re.compile(u'^메일'))
+		memo = soup.find('a', title=re.compile(u'^메모'))
+		if mail is None or memo is None: return
+
 		m1 = re.search(u'새메일(\\d+)통', mail.getText())
 		if m1 is not None:
 			iMail = int(m1.group(1))
 
-		memo = self.menu.soup.find('a', title=re.compile(u'^메모'))
 		m2 = re.search(u'새메모 \\((\\d+)\\)', memo.getText())
 		if m2 is not None:
 			iMemo = int(m2.group(1))
@@ -278,6 +295,71 @@ class GreenMulti2(wx.Frame, Utility):
 
 	def OnHelp(self, e):
 		HelpBox(self)
+
+	def PrepareSpeaking(self):
+		# 센스리더
+		try:
+			self.tts = Dispatch('SenseReader.Application')
+			self.ttsName = 'xvsrd'
+		except:
+			try:
+				self.tts = ctypes.windll.LoadLibrary('nvdaControllerClient32.dll')
+				res = self.tts.nvdaController_testIfRunning()
+				if res != 0:
+					self.tts = False
+					return
+				self.ttsName = 'nvda'
+			except:
+				self.tts = False
+
+
+	def Speak(self, s):
+		try:
+			if not self.tts: return
+			if self.ttsName == 'xvsrd':
+				self.tts.Speak(s)
+			elif self.ttsName == 'nvda':
+				self.tts.nvdaController_speakText(s)
+		except:
+			pass
+
+
+	def LoadTreeMenu(self):
+		try:
+			with open('KBUMenu.dat', 'rb') as f:
+				data = f.read()
+				data = basicMenu.basicMenu + unicode(data, 'utf-8')
+				data = data.replace('\r', '')
+				menus = data.split('\n')
+				for m in menus:
+					if m.startswith('#')  or not '\t' in m: continue
+					code, name, parent, sub = m.split('\t')
+					if not code in self.dTree: self.dTree[code] = (name, parent, sub)
+		except:
+			sys.exit()
+
+
+	def OnAutoDaisy(self, e):
+		auto = self.ReadReg('autodaisy')
+		if auto:
+			self.WriteReg('autodaisy', '')
+			self.fileMenu.Check(self.daisyMI.GetId(), False)
+		else:
+			self.WriteReg('autodaisy', 'auto')
+			self.fileMenu.Check(self.daisyMI.GetId(), True)
+
+
+	def OnContact(self, e):
+		if not self.cookies: return MsgBox(self, u'알림', u'먼저 로그인하세요.')
+		mi = MultilineInput(self, u'개발자에게 쪽지보내기')
+		if mi.ShowModal() == wx.ID_CANCEL: return mi.Destroy()
+		content = mi.textCtrl.GetValue()
+		mi.Destroy()
+		if not content: return MsgBox(self, u'오류', u'메시지 내용이 없습니다. 쪽지 보내기를 취소합니다.')
+
+		dInfo = {'me_recv_mb_id': 'philjang', 'me_memo': content}
+		self.menu.Post('/plugin/ar.memo/memo_form_update.php', dInfo)
+		self.menu.Play('up.wav')
 
 
 

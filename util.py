@@ -10,38 +10,9 @@ from collections import OrderedDict
 import time
 import re
 
-
-
-
 class Utility(object):
-
-	dTree = OrderedDict()
-
 	def __init__(self):
 		self.key = "%x" % os.path.getctime(os.environ["APPDATA"])
-		self.LoadTreeMenu()
-
-	def LoadTreeMenu(self):
-		try:
-			with open('KBUMenu.dat', 'rb') as f:
-				data = f.read()
-				menus = data.split('\r\n')
-				for m in menus:
-					m = unicode(m, 'utf-8')
-					if m.startswith('#')  or not '\t' in m: continue
-					code, name, parent, sub = m.split('\t')
-					self.dTree[code] = [name, parent, sub]
-		except:
-			sys.exit()
-
-
-	def SaveTreeMenu(self):
-		try:
-			with open('treemenu.dat', 'wb') as f:
-				pickle.dump(self.dTree, f)
-		except:
-			pass
-
 
 	def Play(self, wavfile, async=True):
 		try:
@@ -312,13 +283,16 @@ class MenuManager(wx.Dialog):
 			self.listCtrl.SetStringItem(index, 3, sub)
 
 
-class MultilineEditor(wx.Dialog):
+class MultilineInput(wx.Dialog):
 	def __init__(self, parent, title, content=''):
-		wx.Dialog.__init__(self, parent, -1, title, wx.DefaultPosition, (400, 200))
+		wx.Dialog.__init__(self, parent, -1, title, wx.DefaultPosition, (400, 300))
+		self.parent = parent
 
-		self.textCtrl = wx.TextCtrl(self, -1, content, (10, 10), (380, 150),  wx.TE_MULTILINE)
+		self.textCtrl = wx.TextCtrl(self, -1, content, (10, 10), (380, 250),  wx.TE_MULTILINE)
 		self.buttonOK = wx.Button(self, wx.ID_OK, u'확인(&Y)', (180, 170), (100, 20))
 		self.buttonCancel = wx.Button(self, wx.ID_CANCEL, u'취소(&N)', (290, 170), (100, 20))
+
+
 
 
 def TransferManager(dFileInfo, q, sb):

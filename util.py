@@ -295,17 +295,12 @@ class MultilineInput(wx.Dialog):
 
 
 
-def TransferManager(dFileInfo, q, sb):
+def TransferManager(dFileInfo, q):
 	"""q = filename, mode, totalSize, downSize, elapsedTime."""
 	while True:
 		fileName, mode, totalSize, downSize, elapsedTime = q.get()
 		if mode == 'exit': return
 		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
-		if downSize > 0:
-			percent = int(100.0 * downSize / totalSize)
-			msg = u'%s퍼센트 %s %s (남은 전송: %s개)' % (percent, mode, fileName, len(dFileInfo))
-			if percent == 100: msg = ''
-			sb.SetStatusText(msg, 1)
 		if totalSize == downSize: dFileInfo.pop(fileName)
 
 

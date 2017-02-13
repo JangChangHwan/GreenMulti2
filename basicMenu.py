@@ -54,7 +54,7 @@ bbs	3. 게시판	top	free|freeinfo|mark|story|news|agora|humor|ff|broadcast|kbu4
 free	1. 자유게시판	bbs	/bbs/board.php?bo_table=free
 freeinfo	2. 자유공지 / 광고	bbs	/bbs/board.php?bo_table=freeinfo
 mark	3. 벼룩시장 / 구인, 구직	bbs	/bbs/board.php?bo_table=mark
-story	4. 이야기 벤치	bbs	/menu/index.php?page=1&club=main&bcode=story&mo=bbs&&gonum=&s_que=
+story	4. 이야기 벤치	bbs	/bbs/board.php?bo_table=story
 news	5. 뉴스 광장	bbs	news1|news2|news3|news4|news5|news6|news7|news8|news9|welbbs|allnews
 news1	1. 속보	news	/bbs/board.php?bo_table=news1
 news2	2. 정치	news	/bbs/board.php?bo_table=news2
@@ -71,7 +71,7 @@ agora	6. 아고라 토론	bbs	/bbs/board.php?bo_table=agora
 humor	7. 유머 / 공포 / 황당	bbs	/bbs/board.php?bo_table=humor
 ff	8. 가입인사 / 초보 연습	bbs	/bbs/board.php?bo_table=ff
 broadcast	9. 화면해설방송 게시판	bbs	/bbs/board.php?bo_table=broadcast
-kbu4	3. 녹음도서 목록	kbu	/bbs/board.php?bo_table=kbu4
+kbu4	10. 녹음도서 목록	bbs	/bbs/board.php?bo_table=kbu4
 stress1	12. 속상한 것 털어 놓는 방	bbs	/bbs/board.php?bo_table=stress1
 comma	13. 쉼표가 찍힌 일상	bbs	/bbs/board.php?bo_table=comma
 dvsbbs	14. 화면해설방송수신기 불편 신고 게시판	bbs	/bbs/board.php?bo_table=dvsbbs

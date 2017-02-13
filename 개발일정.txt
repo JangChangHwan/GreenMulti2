@@ -1,0 +1,8 @@
+초록멀티2 정식판을 위해 챙겨둘 것.
+
+*해결*  음성 출력 중단시의 문제 해결
+GreenMulti2.Speak 함수 안에 try ~ except 처리
+
+* F5 새로고침 추가할 곳.
+viewPanel, memoListPanel, memoViewPanel
+

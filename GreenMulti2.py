@@ -100,7 +100,7 @@ class GreenMulti2(wx.Frame, Utility):
 
 		self.Show()
 
-		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue, self.sb))
+		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue))
 		th.start()
 
 		self.Login()
@@ -321,7 +321,7 @@ class GreenMulti2(wx.Frame, Utility):
 			elif self.ttsName == 'nvda':
 				self.tts.nvdaController_speakText(s)
 		except:
-			pass
+			self.tts = None
 
 
 	def LoadTreeMenu(self):

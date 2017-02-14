@@ -11,6 +11,7 @@ from multiprocessing import Process, Queue
 from win32com.client import Dispatch
 
 
+
 class ViewPanel(wx.Panel, Utility, Http):
 
 	currentArticle = ''
@@ -27,12 +28,13 @@ class ViewPanel(wx.Panel, Utility, Http):
 		Utility.__init__(self)
 
 		self.parent = parent
-
-		self.textCtrl1 = wx.TextCtrl(self, -1, '', (10, 10), (480, 380), wx.TE_MULTILINE | wx.TE_READONLY)
+		wx.StaticText(self, -1, u'본문', (10, 10), (480, 20))
+		self.textCtrl1 = wx.TextCtrl(self, -1, '', (10, 40), (480, 320), wx.TE_MULTILINE | wx.TE_READONLY)
 		self.textCtrl1.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl1KeyDown)
 		self.textCtrl1.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu1)
 
 		# 댓글 표시창
+		wx.StaticText(self, -1, u'댓글', (10, 370), (480, 20))
 		self.textCtrl2 = wx.TextCtrl(self, -1, '', wx.Point(10, 300), wx.Size(480, 90), wx.TE_READONLY | wx.TE_MULTILINE)
 		self.textCtrl2.Bind(wx.EVT_KEY_DOWN, self.OnTextCtrl2KeyDown)
 		self.textCtrl2.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu2)
@@ -179,11 +181,13 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 		# 첨부파일 추출
 		self.files.clear()
-		fileLinks = self.soup('a', href=re.compile('download.php'))
+		fileLinks = self.soup('a', href=re.compile(r'download.php|http://bigfile\.kbuwel\.or\.kr'))
 		if fileLinks is not None:
 			for link in fileLinks:
 				descript = ' '.join(link.getText().split())
-				self.files[link.strong.getText()] = (descript, link['href'])
+				m = re.search(r'^(.+) \(\d+(,\d{3})*(\.\d+)?(M|K|byte)\)$', descript)
+				if m is not None:
+					self.files[m.group(1)] = (descript, link['href'])
 
 		# 본문 내용 추출
 		div = self.soup.find('div', id='bo_v_con')
@@ -259,7 +263,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 			except:
 				pass
 
-		mi = MultilineInput(self, u'쪽지 쓰기')
+		mi = MultilineInput(self, u'댓글 쓰기')
 		if mi.ShowModal() == wx.ID_CANCEL: 
 			mi.Destroy()
 			return
@@ -367,13 +371,19 @@ class ViewPanel(wx.Panel, Utility, Http):
 			downloadFolder = shell.SpecialFolders('MyDocuments')
 
 		for fileName, (descript, url) in self.files.items():
-			if fileName in self.parent.dFileInfo and self.parent.dFileInfo[fileName][0] == 'download': 
+			stop = False
+			for (pNum, transferFile) in self.parent.dFileInfo.keys():
+				if pNum > 0 and fileName == transferFile: stop = True
+			if stop == True:
 				self.Play('pass.wav', async=False)
 				continue
+
 			filePath = os.path.join(downloadFolder, fileName)
-			p = Process(target=Download, args=(filePath, url, self.parent.transQueue))
+			self.parent.processNumber += 1
+			pNum = str(self.parent.processNumber)
+			p = Process(target=Download, args=(filePath, url, self.parent.transQueue, pNum))
 			p.start()
-			self.parent.dProcess[(fileName, 'download')] = p
+			self.parent.dProcess[(pNum, fileName)] = p
 
 
 	def OnPopupMenu2(self, e):

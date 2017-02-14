@@ -1,26 +1,26 @@
 ﻿# coding: utf-8
 
-import httplib, mimetypes
+import httplib, mimetypes, mimetools
 import os
 from multiprocessing import Process, Queue
 from bs4 import BeautifulSoup as bs
-from MultipartPostHandler import MultipartPostHandler
 from util import *
 import re
 import time
 from winsound import Beep
 from win32com.client import Dispatch
 import zipfile
+from cStringIO import StringIO
+import stat
+
 
 
 class Http(object):
 
-	host = 'web.kbuwel.or.kr'
 	cookies = ''
 	html = ''
 	soup = None
 	response = None
-
 
 
 	def __init__(self, parent=None):
@@ -30,25 +30,25 @@ class Http(object):
 
 
 	def Get(self, selector, soup=True, headers={}):
-		selector = self.Url(selector)
+		(host, selector) = self.Url(selector)
 		headers['Cookie'] = self.cookies
-		conn = httplib.HTTPConnection(self.host)
+		conn = httplib.HTTPConnection(host)
 		conn.request('GET', selector, headers=headers)
 		self.response = conn.getresponse()
 		if soup: self.Soup(self.response)
 
 
 	def Post(self, selector, fields, soup=True):
-		selector = self.Url(selector)
+		(host, selector) = self.Url(selector)
 		fieldList = []
 		for k, v in fields.items():
 			if type(v) == unicode: v = v.encode('utf-8')
 			fieldList.append((k, v))
 
-		boundary, body = MultipartPostHandler.multipart_encode(fieldList, [])
+		boundary, body = self.SimpleEncoder(fieldList)
 		content_type = 'multipart/form-data; boundary=%s' % boundary
 
-		h = httplib.HTTPConnection(self.host)
+		h = httplib.HTTPConnection(host)
 		h.putrequest('POST', selector)
 		h.putheader('content-type', content_type)
 		h.putheader('content-length', str(len(body)))
@@ -66,15 +66,19 @@ class Http(object):
 
 
 	def Url(self, url):
+		"return (host, selector)"
 
 		if url.startswith('./'):
-			return '/bbs' + url[1:]
+			return ('web.kbuwel.or.kr', '/bbs' + url[1:])
 		elif url.startswith('board.php') or url.startswith('download.php'):
-			return '/bbs/' + url
+			return ('web.kbuwel.or.kr', '/bbs/' + url)
 		elif url.startswith('http://web.kbuwel.or.kr'):
-			return url.replace('http://web.kbuwel.or.kr', '')
+			return ('web.kbuwel.or.kr', url.replace('http://web.kbuwel.or.kr', ''))
+		elif url.startswith('http://bigfile.kbuwel.or.kr'):
+			return ('bigfile.kbuwel.or.kr', url.replace('http://bigfile.kbuwel.or.kr', ''))
+
 		else:
-			return url
+			return ('web.kbuwel.or.kr', url)
 
 
 	def GetTextFromTag(self, soup_tag):
@@ -86,23 +90,72 @@ class Http(object):
 		return text
 
 
+	def SimpleEncoder(self, vars):
+		boundary = mimetools.choose_boundary()
+		buffer = StringIO()
+
+		for(key, value) in vars:
+			buffer.write('--%s\r\n' % boundary)
+			buffer.write('Content-Disposition: form-data; name="%s"' % key)
+			if value is None:
+				value = ""
+			buffer.write('\r\n\r\n' + value + '\r\n')
+		buffer.write('--' + boundary + '--\r\n')
+		buffer = buffer.getvalue()
+		return (boundary, buffer)
+
+
+
+	def MultipartEncoder(self, vars, files):
+		boundary = mimetools.choose_boundary()
+		buffer = StringIO()
+
+		for(key, value) in vars:
+			buffer.write('--%s\r\n' % boundary)
+			buffer.write('Content-Disposition: form-data; name="%s"' % key)
+			if value is None:
+				value = ""
+			buffer.write('\r\n\r\n' + value + '\r\n')
+
+		(key, path) = files
+		fd = open(path, 'rb')
+		file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
+		filename = fd.name.split('/')[-1]
+		fd.close()
+
+		contenttype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+		buffer.write('--%s\r\n' % boundary)
+		if type(filename) == unicode: filename = filename.encode('utf-8', 'ignore')
+		buffer.write('Content-Disposition: form-data; name="%s"; filename="%s"\r\n' % (key, filename))
+		buffer.write('Content-Type: %s\r\n' % contenttype)
+		buffer.write('Content-Length: %s\r\n' % file_size)
+		buffer.write('\r\n' )
+
+		buffer = buffer.getvalue()
+		return (boundary, buffer)
+
+
+
+
+
 
 
 class Download(Process, Http, Utility):
-	def __init__(self, filePath, url, q):
+	def __init__(self, filePath, url, q, pNum):
 		Process.__init__(self)
 		Utility.__init__(self)
 		Http.__init__(self, None)
 		self.filePath = filePath
 		self.url = url
 		self.q = q
-		self.Play('down_start.wav', async=False)
+		self.pNum = pNum
+
 		r = self.LoginCheck()
 		if r: 
+			self.Play('down_start.wav')
 			self.run()
 		else:
 			self.Play('error.wav', async=False)
-
 
 	def LoginCheck(self):
 		try:
@@ -122,7 +175,6 @@ class Download(Process, Http, Utility):
 
 	def run(self):
 
-		mode = 'download'
 		self.Get(self.url, soup=False)
 		totalSize = self.response.length
 		if os.path.exists(self.filePath) and os.path.getsize(self.filePath) == totalSize:
@@ -130,25 +182,27 @@ class Download(Process, Http, Utility):
 			return
 
 		downSize = 0
-		chunck = 1024 * 256
+		chunck = 1024 * 1024
 		startTime = time.time()
 		fileName = os.path.basename(self.filePath)
 		f = open(self.filePath, 'wb')
-		self.q.put((fileName, mode, totalSize, 0, 0))
+		self.q.put((self.pNum, fileName, totalSize, 0, 0))
 
 		while True:
 			part = self.response.read(chunck)
 			f.write(part)
 			downSize += len(part)
 			elapsedTime = time.time() - startTime
-			self.q.put((fileName, mode, totalSize, downSize, elapsedTime))
+			self.q.put((self.pNum, fileName, totalSize, downSize, elapsedTime))
 			if self.response.length == 0: break
 
 		f.close()
-		self.q.put((fileName, mode, totalSize, totalSize, elapsedTime))
+		self.q.put((self.pNum, fileName, totalSize, totalSize, elapsedTime))
 
 		if self.ReadReg('autodaisy'):
 			self.ConvertDaisy(self.filePath)
+
+		time.sleep(1)
 		self.Play('down.wav', async=False)
 
 	def ConvertDaisy(self, filePath):
@@ -177,52 +231,68 @@ class Download(Process, Http, Utility):
 
 
 class Upload(Process, Utility, Http):
-	def __init__(self, selector, fields, files, q):
+	def __init__(self, selector, fields, files, q, pNum):
+		"fields : dict, files : list [file, path]"
 		Process.__init__(self)
 		Utility.__init__(self)
 		Http.__init__(self, None)
 		self.selector = selector
 		self.fields = fields
 		self.files = files
-		path = self.files['bf_file[]']
-		self.filename = os.path.basename(path)
-		self.files['bf_file[]'] = open(path, 'rb')
-
 		self.q = q
-
+		self.pNum = pNum
 		if self.LoginCheck(): self.run()
 
 	def run(self):
-		self.selector = self.Url(self.selector)
+		(host, self.selector) = self.Url(self.selector)
 		fieldList = []
 		for k, v in self.fields.items():
 			if type(v) == unicode: v = v.encode('utf-8')
 			fieldList.append((k, v))
-		fileList = self.files.items()
-		boundary, body = MultipartPostHandler.multipart_encode(fieldList, fileList)
+		fileList = self.files
+
+		(boundary, head) = self.MultipartEncoder(fieldList, fileList)
+
+		fileName = os.path.basename(fileList[1])
+		fileSize = os.path.getsize(fileList[1])
 		content_type = 'multipart/form-data; boundary=%s' % boundary
-		chunck = 1024 * 256
+		tail = '\r\n--' + boundary + '--\r\n'
+
+		blockSize = 1024 * 1024
 		upSize = 0
-		fileSize = len(body)
+		totalSize = len(head) + fileSize + len(tail)
 		startTime = time.time()
 
-		h = httplib.HTTPConnection(self.host)
+		h = httplib.HTTPConnection(host)
 		h.putrequest('POST', self.selector)
 		h.putheader('content-type', content_type)
-		h.putheader('content-length', str(fileSize))
+		h.putheader('content-length', str(totalSize))
 		h.putheader('Cookie', self.cookies)
 		h.endheaders()
 
-		self.Play('down_start.wav', async=False)
-		while upSize < fileSize:
-			endPart = fileSize if upSize + chunck > fileSize else upSize + chunck
-			h.send(body[upSize:endPart])
-			elapsedTime = time.time() - startTime
-			self.q.put((self.filename, 'upload', fileSize, upSize, elapsedTime))
-			upSize = endPart
+		self.Play('down_start.wav')
+		self.q.put((self.pNum, fileName, fileSize, 0, 0))
+		h.send(head)
 
+		fp = open(fileList[1], 'rb')
+		fp.seek(0)
+		while True:
+			part = fp.read(blockSize)
+			if not part: break
+
+			h.send(part)
+			elapsedTime = time.time() - startTime
+			upSize += len(part)
+			self.q.put((self.pNum, fileName, fileSize, upSize, elapsedTime))
+
+		# tail을 보낸다.
+		h.send(tail)
+		elapsedTime = time.time() - startTime
+		self.q.put((self.pNum, fileName, fileSize, fileSize, elapsedTime))
+		fp.close()
 		self.response = h.getresponse()
-		self.q.put((self.filename, 'upload', fileSize, fileSize, elapsedTime))
+
+		time.sleep(1)
 		self.Play('up.wav', async=False)
 
 
@@ -270,11 +340,17 @@ class DownloadFromList(Utility, Http):
 		if not self.files: return
 
 		for fileName, (descript, fileUrl) in self.files.items():
-			if fileName in self.parent.dFileInfo and self.parent.dFileInfo[fileName][0] == 'download': 
+			stop = False
+			for (pNum, transferFile) in self.parent.dFileInfo.keys():
+				if pNum > 0 and fileName == transferFile: stop = True
+			if stop == True:
 				self.Play('pass.wav', async=False)
 				continue
 
 			filePath = os.path.join(downloadFolder, fileName)
-			p = Process(target=Download, args=(filePath, fileUrl, self.parent.transQueue))
+			self.parent.processNumber += 1
+			pNum = str(self.parent.processNumber)
+			p = Process(target=Download, args=(filePath, fileUrl, self.parent.transQueue, pNum))
 			p.start()
-			self.parent.dProcess[(fileName, 'download')] = p
+			self.parent.dProcess[(pNum, fileName)] = p
+

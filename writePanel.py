@@ -5,6 +5,7 @@ import re
 from http import *
 from util import *
 from collections import OrderedDict
+import time
 
 
 class WritePanel(wx.Panel, Http):
@@ -80,9 +81,10 @@ class WritePanel(wx.Panel, Http):
 		fileDialog = wx.FileDialog(self, u'파일 선택', '', '*.*', 'All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
 		if fileDialog.ShowModal() == wx.ID_OK:
 			path = fileDialog.GetPath()
+			fileDialog.Destroy()
+			if not path or os.path.getsize(path) > 2 * (1024**3):
+				return MsgBox(self, u'오류', u'업로드 파일의 크기는 2GB를 넘을 수 없습니다. 2GB 이하로 분할하신 후 다시 업로드를 시도하세요.')
 			self.path.SetValue(path)
-		fileDialog.Destroy()
-
 
 	def OnButtonOK(self, e): 
 		title = self.textCtrl1.GetValue()
@@ -96,14 +98,16 @@ class WritePanel(wx.Panel, Http):
 
 		# 첨부파일이 없다면 post로 보내고 있으면 multipartPost로 보낸다.
 		if path and os.path.exists(path):
-			p = Process(target=Upload, args=('/bbs/write_update.php', self.dInfo, {'bf_file[]': path}, self.parent.transQueue))
+			self.parent.processNumber += 1
+			pNum = str(self.parent.processNumber * -1)
+			p = Process(target=Upload, args=('/bbs/write_update.php', self.dInfo, ['bf_file[]', path], self.parent.transQueue, pNum))
 			p.start()
-			self.parent.dProcess[(os.path.basename(path), 'upload')] = p
+			self.parent.dProcess[(pNum, os.path.basename(path))] = p
 
 		else:
 			self.Post('/bbs/write_update.php', self.dInfo)
 			url = self.response.getheader('Location')
-			self.parent.bbs.GetList(self.Url(url))
+			self.parent.bbs.GetList(url)
 			self.parent.bbs.Display()
 			self.parent.bbs.Play('up.wav')
 

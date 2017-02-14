@@ -82,7 +82,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 
 	def GetList(self, selector):
 		self.lArticles = []
-		self.Get(self.Url(selector))
+		self.Get(selector)
 		self.currentPage = selector
 
 		trs = self.soup.find('tbody')('tr')

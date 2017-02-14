@@ -296,12 +296,16 @@ class MultilineInput(wx.Dialog):
 
 
 def TransferManager(dFileInfo, q):
-	"""q = filename, mode, totalSize, downSize, elapsedTime."""
+	"""q = pNum, filename, totalSize, downSize, elapsedTime."""
 	while True:
-		fileName, mode, totalSize, downSize, elapsedTime = q.get()
-		if mode == 'exit': return
-		dFileInfo[fileName] = (mode, totalSize, downSize, elapsedTime)
-		if totalSize == downSize: dFileInfo.pop(fileName)
+		try:
+			pNum, fileName, totalSize, downSize, elapsedTime = q.get()
+			if fileName == 'exit': return
+			dFileInfo[(pNum, fileName)] = (totalSize, downSize, elapsedTime)
+			if totalSize == downSize: 
+				dFileInfo.pop((pNum, fileName))
+		except:
+			pass
 
 
 
@@ -312,12 +316,11 @@ class TransferInfo(wx.Dialog, Utility):
 		self.parent = parent
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (380, 380), wx.LC_REPORT | wx.LC_SINGLE_SEL)
-		self.listCtrl.InsertColumn(0, u'파일이름', width=150)
-		self.listCtrl.InsertColumn(1, u'mode', width=50)
+		self.listCtrl.InsertColumn(0, u'', width=50)
+		self.listCtrl.InsertColumn(1, u'', width=150)
 		self.listCtrl.InsertColumn(2, u'전송율', width=50)
 		self.listCtrl.InsertColumn(3, u'전송속도', width=50)
 		self.listCtrl.InsertColumn(4, u'크기', width=80)
-
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		self.LoadFileInfo()
@@ -340,15 +343,18 @@ class TransferInfo(wx.Dialog, Utility):
 	def Stop(self):
 		index = self.listCtrl.GetFocusedItem()
 		if index == -1: return
-		fileName = self.listCtrl.GetItemText(index, 0)
-		mode = self.listCtrl.GetItemText(index, 1)
-		if not MsgBox(self, u'경고', u'다음 파일 전송을 취소할까요?\n파일이름 : %s\n전송모드 : %s' % (fileName, mode), True): return
-		p = self.parent.dProcess[(fileName, mode)]
-		p.terminate()
-		self.parent.dFileInfo.pop(fileName)
-		self.parent.sb.SetStatusText('', 1)
-		self.Play('delete.wav')
-		self.LoadFileInfo()
+		pNum = self.listCtrl.GetItemText(index, 0)
+		fileName = self.listCtrl.GetItemText(index, 1)
+		if not MsgBox(self, u'경고', u'다음 파일 전송을 취소할까요?\n파일이름 : %s\n프로세스번호 : %s' % (fileName, pNum), True): return
+		try:
+			p = self.parent.dProcess[(pNum, fileName)]
+			self.parent.dFileInfo.pop((pNum, fileName))
+			p.terminate()
+
+			self.Play('delete.wav')
+			self.LoadFileInfo()
+		except:
+			pass
 
 
 	def LoadFileInfo(self):
@@ -356,9 +362,15 @@ class TransferInfo(wx.Dialog, Utility):
 		if index == -1: index = 0
 
 		self.listCtrl.DeleteAllItems()
-		for fileName, (mode, totalSize, downSize, elapsedTime) in self.parent.dFileInfo.items():
-			row = self.listCtrl.InsertStringItem(sys.maxint, fileName)
-			self.listCtrl.SetStringItem(row, 1, mode)
+		for (pNum, fileName), (totalSize, downSize, elapsedTime) in self.parent.dFileInfo.items():
+			if downSize == totalSize: 
+				try:
+					self.parent.dFileInfo.pop((pNum, fileName))
+				except:
+					pass
+				continue
+			row = self.listCtrl.InsertStringItem(sys.maxint, pNum)
+			self.listCtrl.SetStringItem(row, 1, fileName)
 			ratio = 100.0 * downSize / totalSize
 			self.listCtrl.SetStringItem(row, 2, u'%0.2f %%' % ratio)
 			if elapsedTime:

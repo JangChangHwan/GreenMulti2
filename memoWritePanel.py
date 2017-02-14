@@ -40,7 +40,7 @@ class MemoWritePanel(wx.Panel, Http):
 
 
 	def GetInfo(self, url):
-		self.Get(self.Url(url))		
+		self.Get(url)		
 		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		recv = self.soup.find('input', id='me_recv_mb_id')
 		self.receiver.SetValue(recv['value'])

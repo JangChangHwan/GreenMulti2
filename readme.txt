@@ -1,5 +1,4 @@
-﻿GreenMulti2 Beta5 도움말
-(사용제한: 2017년 5월 31일까지)
+﻿GreenMulti2 도움말
 
 1. 개발자 연락처 :  넓은마을 아이디 : philjang
 

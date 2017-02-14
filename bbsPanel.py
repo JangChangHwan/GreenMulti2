@@ -134,7 +134,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def WriteArticle(self):
 		link = self.soup.find('a', href=re.compile(r'/bbs/write.php\?bo_table='))
 		if link is None: return
-		href = self.Url(link['href'])
+		href = link['href']
 		self.Hide()
 		if 'write.php?bo_table=rmail' in href:
 			self.parent.wmail = MailWritePanel(self.parent, href, before='bbs')
@@ -147,7 +147,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 	def GetList(self, selector):
 		self.lArticles = []
-		self.Get(self.Url(selector))
+		self.Get(selector)
 
 		tbody = self.soup.find('tbody')
 		if tbody is None: return
@@ -167,7 +167,12 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
-		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
+		try:
+			pageTitle = self.soup.head.title.string
+		except:
+			pageTitle = ''
+		self.parent.sb.SetStatusText(pageTitle, 0)
+
 		self.listCtrl.DeleteAllItems()
 		for text, author, href in self.lArticles:
 			index = self.listCtrl.InsertStringItem(sys.maxint, text)

@@ -30,6 +30,7 @@ class GreenMulti2(wx.Frame, Utility):
 	memoCount = 0
 	tts = False
 	ttsName = ''
+	processNumber = 0
 
 	def __init__(self, title):
 		wx.Frame.__init__(self, None, -1, title, wx.DefaultPosition, (500, 500))
@@ -46,7 +47,7 @@ class GreenMulti2(wx.Frame, Utility):
 		self.fileMenu.AppendItem(self.loginMI)
 		self.Bind(wx.EVT_MENU, self.OnLogin, self.loginMI)
 
-		contactMI = wx.MenuItem(self.fileMenu, -1, u"개발자에게 한마디")
+		contactMI = wx.MenuItem(self.fileMenu, -1, u"제작자에게...")
 		self.fileMenu.AppendItem(contactMI)
 		self.Bind(wx.EVT_MENU, self.OnContact, contactMI)
 
@@ -120,6 +121,9 @@ class GreenMulti2(wx.Frame, Utility):
 
 		# 파일 전송 관리자 쓰레드를 종료
 		self.transQueue.put(('', 'exit', 0, 0, 0))
+
+		self.Hide()
+		self.Play('exit.wav', async=False)
 		self.Destroy()
 
 
@@ -167,9 +171,9 @@ class GreenMulti2(wx.Frame, Utility):
 				if self.ReadReg('autodaisy'): 			self.fileMenu.Check(self.daisyMI.GetId(), True)
 
 			self.menu.Get('/bbs/board.php?bo_table=free')
-			self.CheckMailMemo(self, self.menu.soup)
 			if self.limit == 3: self.WriteReg('autodaisy', '')
 			self.Play("start.wav", async=False)
+			self.CheckMailMemo(self, self.menu.soup)
 #		except:
 #			pass
 
@@ -283,11 +287,11 @@ class GreenMulti2(wx.Frame, Utility):
 			iMemo = int(m2.group(1))
 
 		if ancestor.mailCount < iMail and ancestor.memoCount < iMemo:
-			ancestor.Play('mailMemo.wav', async=False)
+			ancestor.Play('mailMemo.wav')
 		elif ancestor.mailCount < iMail:
-			ancestor.Play('mail.wav', async=False)
+			ancestor.Play('mail.wav')
 		elif ancestor.memoCount < iMemo:
-			ancestor.Play('memo.wav', async=False)
+			ancestor.Play('memo.wav')
 
 		ancestor.mailCount = iMail
 		ancestor.memoCount = iMemo
@@ -317,8 +321,10 @@ class GreenMulti2(wx.Frame, Utility):
 		try:
 			if not self.tts: return
 			if self.ttsName == 'xvsrd':
+				self.tts.StopSpeaking()
 				self.tts.Speak(s)
 			elif self.ttsName == 'nvda':
+				self.tts.nvdaController_speakText('')
 				self.tts.nvdaController_speakText(s)
 		except:
 			self.tts = None
@@ -370,8 +376,7 @@ def BetaTest():
 		sys.exit()
 
 if __name__ == '__main__':
-	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티2 Beta5')
+	GreenMulti2(u'초록멀티 2')
 	app.MainLoop()

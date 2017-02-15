@@ -118,6 +118,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 			self.DeleteArticle()
 		elif key == ord('D'):
 			self.OnDownFiles()
+		elif key == wx.WXK_SPACE:
+			self.parent.SpeakText(self.textCtrl1)
 
 		else:
 			e.Skip()
@@ -134,6 +136,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 			self.NextComment()
 		elif key == wx.WXK_PAGEUP:
 			self.PrevComment()
+		elif key == wx.WXK_SPACE:
+			self.parent.SpeakText(self.textCtrl2)
 
 		else:
 			e.Skip()

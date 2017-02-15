@@ -47,10 +47,6 @@ class GreenMulti2(wx.Frame, Utility):
 		self.fileMenu.AppendItem(self.loginMI)
 		self.Bind(wx.EVT_MENU, self.OnLogin, self.loginMI)
 
-		contactMI = wx.MenuItem(self.fileMenu, -1, u"제작자에게...")
-		self.fileMenu.AppendItem(contactMI)
-		self.Bind(wx.EVT_MENU, self.OnContact, contactMI)
-
 		homeMI = wx.MenuItem(self.fileMenu, -1, u"초기화면으로\tAlt+Home")
 		self.fileMenu.AppendItem(homeMI)
 		self.Bind(wx.EVT_MENU, self.OnHome, homeMI)
@@ -74,6 +70,10 @@ class GreenMulti2(wx.Frame, Utility):
 		transInfoMI = wx.MenuItem(self.fileMenu, -1, u"파일 전송 정보\tCtrl+J")
 		self.fileMenu.AppendItem(transInfoMI)
 		self.Bind(wx.EVT_MENU, self.OnTransInfo, transInfoMI)
+
+		contactMI = wx.MenuItem(self.fileMenu, -1, u"제작자에게...")
+		self.fileMenu.AppendItem(contactMI)
+		self.Bind(wx.EVT_MENU, self.OnContact, contactMI)
 
 		self.daisyMI = wx.MenuItem(self.fileMenu, -1, u"데이지 자동 변환", kind=wx.ITEM_CHECK)
 		self.Bind(wx.EVT_MENU, self.OnAutoDaisy, self.daisyMI)
@@ -101,8 +101,9 @@ class GreenMulti2(wx.Frame, Utility):
 
 		self.Show()
 
-		th = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue))
-		th.start()
+		th1 = Thread(target=TransferManager, args=(self.dFileInfo, self.transQueue))
+		th1.start()
+
 
 		self.Login()
 
@@ -121,7 +122,6 @@ class GreenMulti2(wx.Frame, Utility):
 
 		# 파일 전송 관리자 쓰레드를 종료
 		self.transQueue.put(('', 'exit', 0, 0, 0))
-
 		self.Hide()
 		self.Play('exit.wav', async=False)
 		self.Destroy()
@@ -172,7 +172,7 @@ class GreenMulti2(wx.Frame, Utility):
 
 			self.menu.Get('/bbs/board.php?bo_table=free')
 			if self.limit == 3: self.WriteReg('autodaisy', '')
-			self.Play("start.wav", async=False)
+			self.Play('start.wav', async=False)
 			self.CheckMailMemo(self, self.menu.soup)
 #		except:
 #			pass
@@ -242,7 +242,7 @@ class GreenMulti2(wx.Frame, Utility):
 	def OnHome(self, e):
 		self.ClosePanels()
 		self.menu.Display('top')
-		self.menu.Play('home.wav')
+		self.Play('home.wav')
 
 
 	def OnGoTo(self, e):
@@ -258,7 +258,7 @@ class GreenMulti2(wx.Frame, Utility):
 		self.ClosePanels()
 		if code != 'top': self.menu.Display(self.dTree[code][1])
 		self.menu.Display(code)
-		self.menu.Play('codeMove.wav')
+		self.Play('codeMove.wav')
 
 
 	def ClosePanels(self, panels=['bbs', 'view', 'write', 'rmail', 'wmail', 'mlist', 'mview', 'wmemo']):
@@ -287,11 +287,11 @@ class GreenMulti2(wx.Frame, Utility):
 			iMemo = int(m2.group(1))
 
 		if ancestor.mailCount < iMail and ancestor.memoCount < iMemo:
-			ancestor.Play('mailMemo.wav')
+			self.Play('mailMemo.wav')
 		elif ancestor.mailCount < iMail:
-			ancestor.Play('mail.wav')
+			self.Play('mail.wav')
 		elif ancestor.memoCount < iMemo:
-			ancestor.Play('memo.wav')
+			self.Play('memo.wav')
 
 		ancestor.mailCount = iMail
 		ancestor.memoCount = iMemo
@@ -365,7 +365,13 @@ class GreenMulti2(wx.Frame, Utility):
 
 		dInfo = {'me_recv_mb_id': 'philjang', 'me_memo': content}
 		self.menu.Post('/plugin/ar.memo/memo_form_update.php', dInfo)
-		self.menu.Play('up.wav')
+		self.Play('up.wav')
+
+
+	def SpeakText(self, ctrl):
+		text = ctrl.GetValue()
+		if text:
+			self.Speak(text)
 
 
 
@@ -378,5 +384,5 @@ def BetaTest():
 if __name__ == '__main__':
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티 2')
+	GreenMulti2(u'초록멀티 2.0')
 	app.MainLoop()

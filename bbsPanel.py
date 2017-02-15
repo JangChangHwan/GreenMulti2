@@ -43,7 +43,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.GetList(url)
 		self.Display()
 		self.listCtrl.SetFocus()
-		self.Play('pageNext.wav')
+		self.parent.Play('pageNext.wav')
 
 
 	def OnPopupMenu(self, e):
@@ -85,13 +85,13 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def KeyUpArrow(self):
 		index = self.listCtrl.GetFocusedItem()
 		if index <= 0:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 	def KeyDownArrow(self):
 		count = self.listCtrl.GetItemCount()
 		index = self.listCtrl.GetFocusedItem()
 		if index == count - 1:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 
 	def OnKeyDown(self, e):
@@ -128,7 +128,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.Display()
 		self.listCtrl.Select(index)
 		self.listCtrl.Select(index)
-		self.Play('refresh.wav')
+		self.parent.Play('refresh.wav')
 
 
 	def WriteArticle(self):
@@ -182,7 +182,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 
 	def NextPage(self):
-		if not self.soup: return self.Play('beep.wav')
+		if not self.soup: return self.parent.Play('beep.wav')
 
 		# 다음 검색 링크가 있으면 곧바로 작동
 		links = self.soup('a')
@@ -190,23 +190,23 @@ class BBSPanel(wx.Panel, Utility, Http):
 			if link.getText() == u'다음검색':
 				self.GetList(link['href'])
 				self.Display()
-				self.Play('pageNext.wav')
+				self.parent.Play('pageNext.wav')
 				return
 
 		currentPage = self.soup.find('strong', attrs={'class':'pg_current'})
-		if currentPage is None: return self.Play('beep.wav')
+		if currentPage is None: return self.parent.Play('beep.wav')
 		nextPage = currentPage.next.next.next.next.next
-		if nextPage.name != 'a': return self.Play('beep.wav')
+		if nextPage.name != 'a': return self.parent.Play('beep.wav')
 		href = nextPage['href']
 		if href.startswith('./'): href = '/bbs' + href[1:]
 		self.currentList = href
 		self.GetList(href)
 		self.Display()
-		self.Play('pageNext.wav')
+		self.parent.Play('pageNext.wav')
 
 
 	def PreviousPage(self):
-		if not self.soup: return self.Play('beep.wav')
+		if not self.soup: return self.parent.Play('beep.wav')
 
 		# 이전검색 링크가 있으면 곧바로 작동
 		links = self.soup('a')
@@ -214,11 +214,11 @@ class BBSPanel(wx.Panel, Utility, Http):
 			if link.getText() == u'이전검색':
 				self.GetList(link['href'])
 				self.Display()
-				self.Play('pageNext.wav')
+				self.parent.Play('pageNext.wav')
 				return
 
 		currentPage = self.soup.find('strong', attrs={'class':'pg_current'})
-		if currentPage is None or currentPage.getText() == '1': return self.Play('beep.wav')
+		if currentPage is None or currentPage.getText() == '1': return self.parent.Play('beep.wav')
 		prevPage = currentPage.previous.previous.previous.previous.previous
 		if prevPage.getText() != u'이전':
 			prevPage = currentPage.previous.previous.previous.previous.previous.previous.previous
@@ -227,12 +227,12 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.currentList = href
 		self.GetList(href)
 		self.Display()
-		self.Play('pagePrev.wav')
+		self.parent.Play('pagePrev.wav')
 
 
 	def OpenArticle(self):
 		index = self.listCtrl.GetFocusedItem()
-		if index == -1: return self.Play('beep.wav')
+		if index == -1: return self.parent.Play('beep.wav')
 		self.Hide()
 		url = self.lArticles[index][2]
 		self.parent.view = ViewPanel(self.parent, url)
@@ -241,7 +241,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def BackToMenu(self, e):
 		self.parent.menu.Show()
 		self.parent.menu.SetFocus()
-		self.parent.menu.Play('pagePrev.wav')
+		self.parent.Play('pagePrev.wav')
 		self.Destroy()
 
 
@@ -266,14 +266,14 @@ class BBSPanel(wx.Panel, Utility, Http):
 			params = urllib.urlencode(d)
 			self.GetList('/bbs/board.php?' + params)
 			self.Display()
-			self.Play('search.wav')
+			self.parent.Play('search.wav')
 
 		searchDialog.Destroy()			
 
 
 	def DownFile(self):
 		index = self.listCtrl.GetFocusedItem()
-		if index == -1: return self.Play('beep.wav')
+		if index == -1: return self.parent.Play('beep.wav')
 
 		if len(self.parent.dFileInfo) >= self.parent.limit: return MsgBox(self, u'알림', u'동시에 전송할 수 있는 파일이 수는 %s개입니다.\n전송을 취소하거나 전송을 마칠 때까지 기다려 주세요.' % self.parent.limit)
 

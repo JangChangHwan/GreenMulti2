@@ -13,13 +13,14 @@ import urllib
 class MemoListPanel(wx.Panel, Utility, Http):
 
 	lArticles = []
+	currentList = ''
 
 	def __init__(self, parent, url):
 		wx.Panel.__init__(self, parent, -1, (0, 0), (500, 500))
 		Http.__init__(self, parent)
 		Utility.__init__(self)
 		self.parent = parent
-		self.url = url
+		self.currentList = url
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (480, 480), wx.LC_REPORT | wx.LC_SINGLE_SEL)
 		self.listCtrl.InsertColumn(0, u'상태', width=80)
@@ -41,19 +42,19 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.GetList(url)
 		self.Display()
 		self.listCtrl.SetFocus()
-		self.Play('pageNext.wav')
+		self.parent.Play('pageNext.wav')
 
 
 	def KeyUpArrow(self):
 		index = self.listCtrl.GetFocusedItem()
 		if index <= 0:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 	def KeyDownArrow(self):
 		count = self.listCtrl.GetItemCount()
 		index = self.listCtrl.GetFocusedItem()
 		if index == count - 1:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 
 	def OnKeyDown(self, e):
@@ -68,6 +69,8 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		elif key == wx.WXK_DOWN:
 			self.KeyDownArrow()
 			e.Skip()
+		if key == wx.WXK_F5:
+			self.Refresh()
 
 		else:
 			e.Skip()
@@ -81,6 +84,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 
 
 	def GetList(self, selector):
+		self.currentList = selector
 		self.lArticles = []
 		self.Get(selector)
 		self.currentPage = selector
@@ -113,7 +117,7 @@ class MemoListPanel(wx.Panel, Utility, Http):
 
 	def OpenMemo(self):
 		index = self.listCtrl.GetFocusedItem()
-		if index == -1: return self.Play('beep.wav')
+		if index == -1: return self.parent.Play('beep.wav')
 		self.Hide()
 		url = self.lArticles[index][3]
 		self.parent.mview = MemoViewPanel(self.parent, url)
@@ -152,3 +156,12 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		elif self.result == u'파일 전송 정보\tCtrl+J':
 			self.parent.OnTransInfo(e)
 
+
+	def Refresh(self):
+		index = self.listCtrl.GetFocusedItem()
+		if index == -1: index = 0
+		self.GetList(self.currentList)
+		self.Display()
+		self.listCtrl.Select(index)
+		self.listCtrl.Select(index)
+		self.parent.Play('refresh.wav')

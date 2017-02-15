@@ -88,26 +88,26 @@ class MenuPanel(wx.Panel, Utility, Http):
 		if index == -1: return
 		code = self.listCtrl.GetItemText(index, 1)
 		r = self.Display(code)
-		if r: self.Play('pageNext.wav')
+		if r: self.parent.Play('pageNext.wav')
 
 
 	def KeyEscape(self):
 		mother = self.parent.dTree[self.currentMenu][1]
-		if not mother: return self.Play('beep.wav')
+		if not mother: return self.parent.Play('beep.wav')
 		self.Display(mother)
-		self.Play('pagePrev.wav')
+		self.parent.Play('pagePrev.wav')
 
 
 	def KeyUpArrow(self):
 		index = self.listCtrl.GetFocusedItem()
 		if index <= 0:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 	def KeyDownArrow(self):
 		count = self.listCtrl.GetItemCount()
 		index = self.listCtrl.GetFocusedItem()
 		if index == count - 1:
-			self.Play('beep.wav')
+			self.parent.Play('beep.wav')
 
 
 	def OnPopupMenu(self, e):

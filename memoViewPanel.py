@@ -10,14 +10,15 @@ from memoWritePanel import MemoWritePanel
 class MemoViewPanel(wx.Panel, Utility, Http):
 
 	content = ''
-	
+	currentView = ''
+
 	def __init__(self, parent, url):
 		wx.Panel.__init__(self, parent, -1, (0, 0), (500, 500))
 		Http.__init__(self, parent)
 		Utility.__init__(self)
 
 		self.parent = parent
-		self.url = url
+		self.currentView = url
 		self.textCtrl = wx.TextCtrl(self, -1, '', (10, 10), (480, 480), wx.TE_MULTILINE | wx.TE_READONLY)
 		self.textCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.textCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
@@ -62,12 +63,14 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 			self.ReplyMemo()
 		elif key == wx.WXK_DELETE:
 			self.DeleteMemo()
+		elif key == wx.WXK_SPACE:
+			self.parent.SpeakText(self.textCtrl)
 
 		else:
 			e.Skip()
 
-
 	def GetInfo(self, selector):
+		self.currentView = selector
 		self.Get(selector)
 
 		# 쪽지 내용 추출
@@ -88,7 +91,7 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 		if MsgBox(self, u'삭제 경고', u'이 쪽지를 삭제할까요?', True):
 			href = 'http://web.kbuwel.or.kr/plugin/ar.memo' + href[1:]
 			self.Get(href)
-			self.parent.mlist.GetList(self.parent.mlist.url)
+			self.parent.mlist.GetList(self.parent.mlist.currentList)
 			self.parent.mlist.Display()
 			self.parent.mlist.Show()
 			self.parent.mlist.listCtrl.SetFocus()

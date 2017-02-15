@@ -165,7 +165,7 @@ class Download(Process, Http, Utility):
 
 			params = {'url': 'http%3A%2F%2Fweb.kbuwel.or.kr', 'mb_id': kbuid, 'mb_password': kbupw}
 			self.Post('/bbs/login_check.php', params, soup=False)
-			if self.response.getheader('Location') and 'bo_table=notice' in self.response.getheader('Location'):
+			if self.response.getheader('Location'):
 				self.cookies = self.response.getheader('set-cookie')
 				return True
 			return False
@@ -305,7 +305,7 @@ class Upload(Process, Utility, Http):
 
 			params = {'url': 'http%3A%2F%2Fweb.kbuwel.or.kr', 'mb_id': kbuid, 'mb_password': kbupw}
 			self.Post('/bbs/login_check.php', params, soup=False)
-			if self.response.getheader('Location') and 'bo_table=notice' in self.response.getheader('Location'):
+			if self.response.getheader('Location'):
 				self.cookies = self.response.getheader('set-cookie')
 				return True
 			return False

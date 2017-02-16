@@ -205,7 +205,9 @@ skt1	1. 공지사항	skt	/bbs/board.php?bo_table=skt1&cl=skt
 skt2	2. 묻고 답하기	skt	/bbs/board.php?bo_table=skt2&cl=skt
 skt3	3. 자료실	skt	/bbs/board.php?bo_table=skt3&cl=skt
 skt4	4. 행복이벤트 참여 게시판	skt	/bbs/board.php?bo_table=skt4&cl=skt
+
 potion	5. 동호회 모음	top	circle|classmate|religion
+
 circle	1. 일반 동호회	potion	medical|click|tbp
 medical	2. 이료동호회	circle	menotice|mepd|medihome|medifree|mecare|menews|meexper
 menotice	1. 공지사항	medical	/bbs/board.php?bo_table=menotice&cl=medical

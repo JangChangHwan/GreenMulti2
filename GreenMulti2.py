@@ -163,16 +163,20 @@ class GreenMulti2(wx.Frame, Utility):
 				return
 
 			# 초록등대 정회원 확인
-			self.menu.Get('/bbs/board.php?bo_table=green61&cl=green')
-			title = self.menu.soup.head.title.getText()
-			if not title.startswith(u'오류')			:
+			self.menu.Get('http://web.kbuwel.or.kr/plugin/ar.club/member.php?&cl=green')
+			m = re.search(u'회원등급 :[^\\(\\)]*\\((\\d+)\\)', self.menu.html)
+			if m is not None and int(m.group(1)) >= 5:
 				self.limit = 100
 				self.fileMenu.InsertItem(9, self.daisyMI)
 				if self.ReadReg('autodaisy'): 			self.fileMenu.Check(self.daisyMI.GetId(), True)
+			else:
+				self.limit = 3
+				self.WriteReg('autodaisy', '')
 
-			self.menu.Get('/bbs/board.php?bo_table=free')
-			if self.limit == 3: self.WriteReg('autodaisy', '')
 			self.Play('start.wav', async=False)
+
+			# 메일 메모 확인
+			self.menu.Get('/bbs/board.php?bo_table=free')
 			self.CheckMailMemo(self, self.menu.soup)
 #		except:
 #			pass
@@ -376,12 +380,13 @@ class GreenMulti2(wx.Frame, Utility):
 
 
 def BetaTest():
-	limitDate = datetime.date(2017, 5, 31)
+	limitDate = datetime.date(2017, 6, 30)
 	currentDate = datetime.date.fromtimestamp(time.time())
 	if limitDate < currentDate:
 		sys.exit()
 
 if __name__ == '__main__':
+#	BetaTest()
 	freeze_support()
 	app = wx.App()
 	GreenMulti2(u'초록멀티 2.0')

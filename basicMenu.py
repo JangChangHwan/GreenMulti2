@@ -5,7 +5,7 @@ basicMenu = u"""
 top	초기메뉴		green|guide|mail|bbs|computer|potion|blindnews|magazin|pds|lib|amcenter|pds2012
 
 # 초록등대
-green	0. 초록등대	top	green1|green2|green3|green4|green5|green6|green7|green8|green9
+green	0. 초록등대	top	green1|green2|green3|green4|green5|green6|green7|green8|green9|green10
 green1	1. 공지사항	green	/bbs/board.php?bo_table=green1&cl=green
 green2	2. 나눔장터	top	/bbs/board.php?bo_table=green2&cl=green
 green3	3. 우리들의 이야기	green	/bbs/board.php?bo_table=green3&cl=green
@@ -31,6 +31,7 @@ green699	99. 요청게시판	green6	/bbs/board.php?bo_table=green699&cl=green
 green7	7. Youtube	green	/bbs/board.php?bo_table=green7&cl=green
 green8	8. 건의함	green	/bbs/board.php?bo_table=green8&cl=green
 green9	9. 질문게시판	green	/bbs/board.php?bo_table=green9&cl=green
+green10	10. 회원가입 및 정보 확인	green	http://web.kbuwel.or.kr/plugin/ar.club/member.php?cl=green
 
 # 공지사항
 guide	1. 공지 및 이용안내	top	notice|oldinfo|rtguide

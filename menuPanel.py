@@ -8,6 +8,7 @@ from viewPanel import ViewPanel
 from mailWritePanel import MailWritePanel
 from memoListPanel import MemoListPanel
 from memoWritePanel import MemoWritePanel
+from memberJoin import MemberJoin
 
 
 class MenuPanel(wx.Panel, Utility, Http):
@@ -50,6 +51,10 @@ class MenuPanel(wx.Panel, Utility, Http):
 		elif submenu.startswith('/'):
 			self.Hide()
 			self.parent.bbs = BBSPanel(self.parent, submenu)
+			return False
+
+		elif '/plugin/ar.club/member.php' in submenu:
+			MemberJoin(self, submenu)
 			return False
 
 		self.parent.sb.SetStatusText(title, 0)

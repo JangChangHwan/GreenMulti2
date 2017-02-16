@@ -1,4 +1,4 @@
-﻿GreenMulti 2 정식판 도움말
+﻿GreenMulti 2 도움말
 
 1. 개발자 연락처 :  넓은마을 아이디 : philjang
 

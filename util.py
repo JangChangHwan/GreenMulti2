@@ -9,11 +9,13 @@ import wx
 from collections import OrderedDict
 import time
 import re
+from base64 import b64encode, b64decode
+
 
 class Utility(object):
 	def __init__(self):
-		self.key = "%x" % os.path.getctime(os.environ["APPDATA"])
-
+		pass
+ 
 	def Play(self, wavfile, async=True):
 		try:
 			if async:
@@ -44,38 +46,37 @@ class Utility(object):
 
 
 	def Encrypt(self, s):
-		if len(s) < 3: return ''
+		if not isinstance(s, basestring): return ''
+		b = b64encode(s)
+		b = b.replace('=', '')
+		r = ''
+		for c in b:
+			r = c + r
 		try:
-			r = ''
-			i = 0
-			for c in s:
-				i = i % len(self.key)
-				n = ord(c) + ord(self.key[i])
-				r += chr(n) if n <= 126 else chr(n - 95)
-				i += 1
 			return r
 		except:
 			return ''
+
 
 
 	def Decrypt(self, s):
+		if not isinstance(s, basestring): return ''
+		b = ''
+		for c in s:
+			b = c + b
+		e = 4 - (len(b) % 4)
+		if e < 4: b += '=' * e
 		try:
-			r = ''
-			i = 0
-			for c in s:
-				i = i % len(self.key)
-				n= ord(c) - ord(self.key[i])
-				r += chr(n) if n >= 32 else chr(n + 95)
-				i += 1
-			return r
+			return b64decode(b)
 		except:
 			return ''
 
+
 	def Date(self, s):
-		# 년-월-일 시:분 --> x월 x일 x시 x분으로 변경
-		s = re.sub(r'(\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d)', u' \\2월 \\3일 \\4시 \\5분', s)
+		# 년-월-일 시:분 --> 20xx년 x월 x일 x시 x분으로 변경
+		s = re.sub(r'(\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d)', u' 20\\1년 \\2월 \\3일 \\4시 \\5분', s)
 		# 01 02 03 등을 1, 2, 3으로 변경
-		s = re.sub(r'\b(0)(\d)', r'\2', s)
+		s = re.sub(u'\\b(0)(\\d[월일시분])', r'\2', s)
 		return s
 
 

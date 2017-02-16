@@ -176,7 +176,12 @@ class ViewPanel(wx.Panel, Utility, Http):
 	def GetInfo(self, selector):
 		self.currentArticle = url = selector
 		self.Get(url)
-		self.title = self.soup.head.title.getText()
+		if not self.soup: return
+
+		self.title = ''
+		if self.soup.head.title: 
+			self.title = self.soup.head.title.getText()
+
 		# 글쓴이 등등 정보 추출
 		infoSection = self.soup.find('section', id='bo_v_info')
 		if infoSection is not None:
@@ -218,6 +223,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
+		if not self.soup: return
+
 		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.textCtrl1.Clear()
 		self.textCtrl2.Clear()

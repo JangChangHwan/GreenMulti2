@@ -148,6 +148,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 	def GetList(self, selector):
 		self.lArticles = []
 		self.Get(selector)
+		if not self.soup: return
 
 		tbody = self.soup.find('tbody')
 		if tbody is None: return
@@ -168,6 +169,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 	def Display(self):
 		try:
+			if not self.soup: return
 			pageTitle = self.soup.head.title.string
 		except:
 			pageTitle = ''

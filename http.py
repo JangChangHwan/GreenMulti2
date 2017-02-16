@@ -60,10 +60,12 @@ class Http(object):
 
 
 	def Soup(self, res, encoding='utf-8'):
-		html = res.read()
-		self.html = unicode(html, encoding)
-		self.soup = bs(html, 'html.parser')
-
+		try:
+			html = res.read()
+			self.html = unicode(html, encoding)
+			self.soup = bs(html, 'html.parser')
+		except:
+			self.soup = None
 
 	def Url(self, url):
 		"return (host, selector)"
@@ -152,7 +154,7 @@ class Download(Process, Http, Utility):
 
 		r = self.LoginCheck()
 		if r: 
-			self.Play('down_start.wav')
+			self.Play('down_start.wav', async=False)
 			self.run()
 		else:
 			self.Play('error.wav', async=False)
@@ -207,26 +209,29 @@ class Download(Process, Http, Utility):
 
 	def ConvertDaisy(self, filePath):
 		if not filePath.lower().endswith('.zip'): return
-		zfile = zipfile.ZipFile(filePath, 'r')
-		for fileName in zfile.namelist():
-			# .xml이 아니면 패스
-			if not fileName.lower().endswith('.xml'): continue
-			# .xml이면 파싱하여 데이지 파일인지 검사
-			xml = zfile.read(fileName)
-			soup = bs(xml, 'html.parser')
-			m = soup.find('dtbook', xmlns=re.compile(r'^http://www.daisy.org/'))
-			if m is None: continue
-			# 문자 추출
-			paras = soup('p')
-			if paras is None: continue
-			txt = u'\r\n'.join([p.getText() for p in paras])
-			txt = re.sub(r'[ ]{2,}', ' ', txt)
-			destPath = filePath[:-4] + '.txt'
-			with open(destPath, 'wb') as f:
-				f.write(txt.encode('utf-16', 'ignore'))
-				zfile.close()
-				os.remove(filePath)
-			break
+		try:
+			zfile = zipfile.ZipFile(filePath, 'r')
+			for fileName in zfile.namelist():
+				# .xml이 아니면 패스
+				if not fileName.lower().endswith('.xml'): continue
+				# .xml이면 파싱하여 데이지 파일인지 검사
+				xml = zfile.read(fileName)
+				soup = bs(xml, 'html.parser')
+				m = soup.find('dtbook', xmlns=re.compile(r'^http://www.daisy.org/'))
+				if m is None: continue
+				# 문자 추출
+				paras = soup('p')
+				if paras is None: continue
+				txt = u'\r\n'.join([p.getText() for p in paras])
+				txt = re.sub(r'[ ]{2,}', ' ', txt)
+				destPath = filePath[:-4] + '.txt'
+				with open(destPath, 'wb') as f:
+					f.write(txt.encode('utf-16', 'ignore'))
+					zfile.close()
+					os.remove(filePath)
+				break
+		except:
+			self.Play('error.wav', async=False)
 
 
 
@@ -331,11 +336,13 @@ class DownloadFromList(Utility, Http):
 			shell = Dispatch('Wscript.Shell')
 			downloadFolder = shell.SpecialFolders('MyDocuments')
 
-		fileLinks = self.soup('a', href=re.compile('download.php'))
+		fileLinks = self.soup('a', href=re.compile(r'download.php|http://bigfile\.kbuwel\.or\.kr'))
 		if fileLinks is not None:
 			for link in fileLinks:
 				descript = ' '.join(link.getText().split())
-				self.files[link.strong.getText()] = (descript, link['href'])
+				m = re.search(r'^(.+) \(\d+(,\d{3})*(\.\d+)?(M|K|byte)\)$', descript)
+				if m is not None:
+					self.files[m.group(1)] = (descript, link['href'])
 
 		if not self.files: return
 

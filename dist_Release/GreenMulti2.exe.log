@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "bbsPanel.pyc", line 106, in OnKeyDown
+  File "bbsPanel.pyc", line 238, in OpenArticle
+  File "viewPanel.pyc", line 67, in __init__
+  File "viewPanel.pyc", line 178, in GetInfo
+  File "http.pyc", line 38, in Get
+  File "http.pyc", line 64, in Soup
+UnicodeDecodeError: 'utf8' codec can't decode byte 0xbe in position 6794: invalid start byte
+Traceback (most recent call last):
+  File "bbsPanel.pyc", line 106, in OnKeyDown
+  File "bbsPanel.pyc", line 238, in OpenArticle
+  File "viewPanel.pyc", line 67, in __init__
+  File "viewPanel.pyc", line 178, in GetInfo
+  File "http.pyc", line 38, in Get
+  File "http.pyc", line 64, in Soup
+UnicodeDecodeError: 'utf8' codec can't decode byte 0xbe in position 6794: invalid start byte
+Traceback (most recent call last):
+  File "bbsPanel.pyc", line 106, in OnKeyDown
+  File "bbsPanel.pyc", line 238, in OpenArticle
+  File "viewPanel.pyc", line 67, in __init__
+  File "viewPanel.pyc", line 178, in GetInfo
+  File "http.pyc", line 38, in Get
+  File "http.pyc", line 64, in Soup
+UnicodeDecodeError: 'utf8' codec can't decode byte 0xbe in position 6818: invalid start byte

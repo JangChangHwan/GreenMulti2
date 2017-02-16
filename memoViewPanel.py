@@ -80,7 +80,10 @@ class MemoViewPanel(wx.Panel, Utility, Http):
 
 
 	def Display(self):
-		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
+		title = ''
+		if self.soup.head.title: 
+			title = self.soup.head.title.getText()
+		self.parent.sb.SetStatusText(title, 0)
 		self.textCtrl.Clear()
 		self.textCtrl.SetValue(self.content)
 

@@ -305,20 +305,23 @@ class GreenMulti2(wx.Frame, Utility):
 		HelpBox(self)
 
 	def PrepareSpeaking(self):
-		# 센스리더
+		# NVDA 우선 
 		try:
-			self.tts = Dispatch('SenseReader.Application')
-			self.ttsName = 'xvsrd'
-		except:
-			try:
-				self.tts = ctypes.windll.LoadLibrary('nvdaControllerClient32.dll')
-				res = self.tts.nvdaController_testIfRunning()
-				if res != 0:
-					self.tts = False
+			self.tts = ctypes.windll.LoadLibrary('nvdaControllerClient32.dll')
+			res = self.tts.nvdaController_testIfRunning()
+			if res == 0:
+					self.ttsName = 'nvda'
 					return
-				self.ttsName = 'nvda'
-			except:
-				self.tts = False
+			else:
+				try:
+					self.tts = Dispatch('SenseReader.Application')
+					self.ttsName = 'xvsrd'
+				except:
+					self.tts = False
+					self.tts = False
+		except:
+			self.tts = False
+			self.ttsName = False
 
 
 	def Speak(self, s):

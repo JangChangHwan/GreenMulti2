@@ -24,8 +24,12 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.currentList = url
 
 		self.listCtrl = wx.ListCtrl(self, -1, (10, 10), (480, 480), wx.LC_REPORT | wx.LC_SINGLE_SEL)
-		self.listCtrl.InsertColumn(0, u'제목', width=400)
-		self.listCtrl.InsertColumn(1, u'이름', width=80)
+		self.listCtrl.InsertColumn(0, '', width=30) # 번호
+		self.listCtrl.InsertColumn(1, '', width=20) # 읽음/ 읽지 않음
+		self.listCtrl.InsertColumn(2, '', width=300) # 제목
+		self.listCtrl.InsertColumn(3, '', width=50) # 첨부파일 여부
+		self.listCtrl.InsertColumn(4, u'이름', width=50)
+		self.listCtrl.InsertColumn(5, u'조회', width=30)
 		self.listCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.listCtrl.Bind(wx.EVT_RIGHT_DOWN, self.OnPopupMenu)
 
@@ -142,9 +146,6 @@ class BBSPanel(wx.Panel, Utility, Http):
 			self.parent.write = WritePanel(self.parent, href, before='bbs')
 
 
-
-
-
 	def GetList(self, selector):
 		self.lArticles = []
 		self.Get(selector)
@@ -156,15 +157,40 @@ class BBSPanel(wx.Panel, Utility, Http):
 		if trs is None or (len(trs) == 1 and trs[0].td['class'][0] == 'empty_table'): return
 
 		for tr in trs:
-			title = name = href = ''
-			tdSubs = tr('td', attrs={'class': re.compile('td_subject')})
-			title = tdSubs[0].a.getText()
-			href = tdSubs[0].a['href']
-			tdNames = tr('td', attrs={'class': re.compile('td_name')})
-			if tdNames: name = tdNames[0].getText()
-			self.lArticles.append((title, name, href))
+			num = isRead = title = isFile = name = hit = href = ''
+			# 게시물 번호와 조회
+			tdNum = tr('td', attrs={'class': 'td_num'})
+			try:
+				num = tdNum[0].getText().strip()
+				hit = tdNum[1].getText().strip()
+			except:
+				pass
 
-		self.parent.CheckMailMemo(self.parent, self.soup)
+			# 읽음 여부
+			tdIsRead = tr('td', attrs={'class': 'td_hit'})
+			try:
+				isRead = tdIsRead[0].img['alt'].strip()
+			except:
+				pass
+
+			# 제목
+			tdSub = tr('td', attrs={'class': re.compile('td_subject')})
+			try:
+				title = tdSub[0].a.getText().strip()
+				href = tdSub[0].a['href'].strip()
+				isFile = tdSub[0].img['alt'].strip()
+			except:
+				pass
+			
+			# 이름
+			tdName = tr('td', attrs={'class': re.compile('td_name')})
+			try:
+				name = tdName[0].getText().strip()
+			except:
+				pass
+
+			self.lArticles.append((num, isRead, title, isFile, name, hit, href))
+			self.parent.CheckMailMemo(self.parent, self.soup)
 
 
 	def Display(self):
@@ -176,11 +202,15 @@ class BBSPanel(wx.Panel, Utility, Http):
 		self.parent.sb.SetStatusText(pageTitle, 0)
 
 		self.listCtrl.DeleteAllItems()
-		for text, author, href in self.lArticles:
-			index = self.listCtrl.InsertStringItem(sys.maxint, text)
-			self.listCtrl.SetStringItem(index, 1, author)
-		self.listCtrl.Focus(0)
-		self.listCtrl.Select(0)
+		for num, isRead, title, isFile, name, hit, href in self.lArticles:
+			index = self.listCtrl.InsertStringItem(sys.maxint, num)
+			self.listCtrl.SetStringItem(index, 1, isRead)
+			self.listCtrl.SetStringItem(index, 2, title)
+			self.listCtrl.SetStringItem(index, 3, isFile)
+			self.listCtrl.SetStringItem(index, 4, name)
+			self.listCtrl.SetStringItem(index, 5, hit)
+			self.listCtrl.Focus(0)
+			self.listCtrl.Select(0)
 
 
 	def NextPage(self):
@@ -236,7 +266,7 @@ class BBSPanel(wx.Panel, Utility, Http):
 		index = self.listCtrl.GetFocusedItem()
 		if index == -1: return self.parent.Play('beep.wav')
 		self.Hide()
-		url = self.lArticles[index][2]
+		url = self.lArticles[index][6]
 		self.parent.view = ViewPanel(self.parent, url)
 
 
@@ -279,7 +309,9 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 		if len(self.parent.dFileInfo) >= self.parent.limit: return MsgBox(self, u'알림', u'동시에 전송할 수 있는 파일이 수는 %s개입니다.\n전송을 취소하거나 전송을 마칠 때까지 기다려 주세요.' % self.parent.limit)
 
-		url = self.lArticles[index][2]
+		if not self.lArticles[index][3]: return
+
+		url = self.lArticles[index][6]
 		down = DownloadFromList(self.parent, url)
 
 

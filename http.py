@@ -60,12 +60,14 @@ class Http(object):
 
 
 	def Soup(self, res, encoding='utf-8'):
+		self.html = self.soup = ''
 		try:
 			html = res.read()
 			self.html = unicode(html, encoding)
 			self.soup = bs(html, 'html.parser')
 		except:
-			self.soup = None
+			self.soup = ''
+
 
 	def Url(self, url):
 		"return (host, selector)"

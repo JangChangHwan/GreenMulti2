@@ -212,7 +212,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 				body = self.GetTextFromTag(reply.p)
 				# 수정, 삭제 링크가 있다면 추출하여 value로 저장. 없으면 빈 터플로 저장
 				delete = ''
-				if reply.footer.ul.li and reply.footer.ul.li.text == u"삭제": 
+				if reply.footer and reply.footer.ul.li and reply.footer.ul.li.text == u"삭제": 
 					delete = reply.footer.ul.li.a['href']
 				key = name + body
 				key = self.Date(key)

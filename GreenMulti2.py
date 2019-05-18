@@ -423,5 +423,5 @@ if __name__ == '__main__':
 #	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티 2.1')
+	GreenMulti2(u'초록멀티 2.1.1')
 	app.MainLoop()

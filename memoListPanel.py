@@ -107,9 +107,9 @@ class MemoListPanel(wx.Panel, Utility, Http):
 		self.parent.sb.SetStatusText(self.soup.head.title.string, 0)
 		self.listCtrl.DeleteAllItems()
 		for state, author, text, href in self.lArticles:
-			index = self.listCtrl.InsertStringItem(sys.maxint, state)
-			self.listCtrl.SetStringItem(index, 1, author)
-			self.listCtrl.SetStringItem(index, 2, text)
+			index = self.listCtrl.InsertItem(sys.maxint, state)
+			self.listCtrl.SetItem(index, 1, author)
+			self.listCtrl.SetItem(index, 2, text)
 		self.listCtrl.Focus(0)
 		self.listCtrl.Select(0)
 

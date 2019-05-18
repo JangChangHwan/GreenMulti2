@@ -212,8 +212,8 @@ class ViewPanel(wx.Panel, Utility, Http):
 				body = self.GetTextFromTag(reply.p)
 				# 수정, 삭제 링크가 있다면 추출하여 value로 저장. 없으면 빈 터플로 저장
 				delete = ''
-				if reply.footer.ul.li: 
-					delete = reply.footer.ul.li.nextSibling.nextSibling.a['href']
+				if reply.footer.ul.li and reply.footer.ul.li.text == u"삭제": 
+					delete = reply.footer.ul.li.a['href']
 				key = name + body
 				key = self.Date(key)
 				key = re.sub(r'[\t ]+', ' ', key)
@@ -233,7 +233,7 @@ class ViewPanel(wx.Panel, Utility, Http):
 		fileList = ''
 		if self.files:
 			fileList = ''.join([u'\r\n첨부파일:%s' % descript for filename, (descript, url) in self.files.items()])
-		body = self.title + self.info + fileList + '\r\n' + self.content + u'\r\n게[시물의 끝입니다.]'
+		body = self.title + self.info + fileList + '\r\n' + self.content + u'\r\n[게시물의 끝입니다.]'
 		body = body.replace('\t', ' ')
 		self.textCtrl1.SetValue(body)
 

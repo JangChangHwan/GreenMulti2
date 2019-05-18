@@ -14,7 +14,7 @@ import time
 import datetime
 from subprocess import Popen
 import ctypes
-
+import urllib
 
 
 class GreenMulti2(wx.Frame, Utility):
@@ -44,46 +44,46 @@ class GreenMulti2(wx.Frame, Utility):
 		self.fileMenu = wx.Menu()
 
 		self.loginMI = wx.MenuItem(self.fileMenu, -1, u"로그인\tCtrl+L")
-		self.fileMenu.AppendItem(self.loginMI)
+		self.fileMenu.Append(self.loginMI)
 		self.Bind(wx.EVT_MENU, self.OnLogin, self.loginMI)
 
 		homeMI = wx.MenuItem(self.fileMenu, -1, u"초기화면으로\tAlt+Home")
-		self.fileMenu.AppendItem(homeMI)
+		self.fileMenu.Append(homeMI)
 		self.Bind(wx.EVT_MENU, self.OnHome, homeMI)
 
 		gotoMI = wx.MenuItem(self.fileMenu, -1, u"코드 바로가기\tCtrl+G")
-		self.fileMenu.AppendItem(gotoMI)
+		self.fileMenu.Append(gotoMI)
 		self.Bind(wx.EVT_MENU, self.OnGoTo, gotoMI)
 
 		downloadFolderMI = wx.MenuItem(self.fileMenu, -1, u"다운로드 폴더 변경")
-		self.fileMenu.AppendItem(downloadFolderMI)
+		self.fileMenu.Append(downloadFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnDownloadFolder, downloadFolderMI)
 
 		openFolderMI = wx.MenuItem(self.fileMenu, -1, u"다운로드 폴더 열기\tCtrl+O")
-		self.fileMenu.AppendItem(openFolderMI)
+		self.fileMenu.Append(openFolderMI)
 		self.Bind(wx.EVT_MENU, self.OnOpenFolder, openFolderMI)
 
 		shortcutMI = wx.MenuItem(self.fileMenu, -1, u'바탕화면 바로가기 추가/제거')
-		self.fileMenu.AppendItem(shortcutMI)
+		self.fileMenu.Append(shortcutMI)
 		self.Bind(wx.EVT_MENU, self.OnShortcut, shortcutMI)
 
 		transInfoMI = wx.MenuItem(self.fileMenu, -1, u"파일 전송 정보\tCtrl+J")
-		self.fileMenu.AppendItem(transInfoMI)
+		self.fileMenu.Append(transInfoMI)
 		self.Bind(wx.EVT_MENU, self.OnTransInfo, transInfoMI)
 
 		contactMI = wx.MenuItem(self.fileMenu, -1, u"제작자에게...")
-		self.fileMenu.AppendItem(contactMI)
+		self.fileMenu.Append(contactMI)
 		self.Bind(wx.EVT_MENU, self.OnContact, contactMI)
 
 		self.daisyMI = wx.MenuItem(self.fileMenu, -1, u"데이지 자동 변환", kind=wx.ITEM_CHECK)
 		self.Bind(wx.EVT_MENU, self.OnAutoDaisy, self.daisyMI)
 
 		helpMI = wx.MenuItem(self.fileMenu, -1, u"도움말\tF1")
-		self.fileMenu.AppendItem(helpMI)
+		self.fileMenu.Append(helpMI)
 		self.Bind(wx.EVT_MENU, self.OnHelp, helpMI)
 
 		quitMI = wx.MenuItem(self.fileMenu, -1, u"종료")
-		self.fileMenu.AppendItem(quitMI)
+		self.fileMenu.Append(quitMI)
 		self.Bind(wx.EVT_MENU, self.OnClose, quitMI)
 		menuBar.Append(self.fileMenu, u'파일(&F)')
 		self.SetMenuBar(menuBar)
@@ -153,7 +153,10 @@ class GreenMulti2(wx.Frame, Utility):
 			# 넓마 로그인
 			params = {'url': 'http%3A%2F%2Fweb.kbuwel.or.kr', 'mb_id': kbuid, 'mb_password': kbupw}
 			self.menu.Post('/bbs/login_check.php', params)
-			if self.menu.response.getheader('Location'):
+			if not self.menu.response:
+				wx.MessageBox(u"넓은마을 서버에 접속할 수 없습니다.", u"연결 오류", parent=self)
+				return 
+			elif self.menu.response.getheader('Location'):
 				self.cookies = self.menu.cookies = self.menu.response.getheader('set-cookie')
 				self.WriteReg('kbuid', self.Encrypt(kbuid))
 				self.WriteReg('kbupw', self.Encrypt(kbupw))
@@ -167,7 +170,7 @@ class GreenMulti2(wx.Frame, Utility):
 			m = re.search(u'회원등급 :[^\\(\\)]*\\((\\d+)\\)', self.menu.html)
 			if m is not None and int(m.group(1)) >= 5:
 				self.limit = 100
-				self.fileMenu.InsertItem(9, self.daisyMI)
+				self.fileMenu.Insert(9, self.daisyMI)
 				if self.ReadReg('autodaisy'): 			self.fileMenu.Check(self.daisyMI.GetId(), True)
 			else:
 				self.limit = 3
@@ -336,8 +339,36 @@ class GreenMulti2(wx.Frame, Utility):
 		except:
 			self.tts = None
 
-
 	def LoadTreeMenu(self):
+
+		### 새로운 kbuMenu.dat 파일 검색
+		try:
+			### 최초라면 마지막 체크 시간을 0으로 셋팅
+			lastCheckTime = self.ReadReg("KBUMenu")
+			if not lastCheckTime:
+				self.WriteReg("KBUMenu.version", "0")
+				self.WriteReg("KBUMenu", "0.0")
+				lastCheckTime = "0.0"
+			# 하루에 한번만 검사하도록 함
+			currentTime = time.time()
+			lastCheckTime = float(lastCheckTime)
+			if currentTime - lastCheckTime > 86400:
+				self.WriteReg("KBUMenu", str(currentTime))
+				r = urllib.urlopen("https://docs.google.com/uc?export=download&id=1pD_qONu0kW1ftWi2JWOvFNFk186JTcU_")
+				v = r.read()
+				v = int(v)
+				lastVersion = self.ReadReg("KBUMenu.version")
+				lastVersion = int(lastVersion)
+				if lastVersion < v:
+					r2 = urllib.urlopen("https://docs.google.com/uc?export=download&id=1HFTO_38JX3VX2HzyYY47I4-oHPQ4__xH")
+					menuData = r2.read()
+					with open("KBUMenu.dat", "wb") as f:
+						f.write(menuData)
+						self.WriteReg("KBUMenu.version", str(v))
+		except:
+			pass
+
+		# kbuMenu.dat 파일 불러 오기
 		try:
 			with open('KBUMenu.dat', 'rb') as f:
 				data = f.read()
@@ -392,5 +423,5 @@ if __name__ == '__main__':
 #	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티 2.0')
+	GreenMulti2(u'초록멀티 2.1')
 	app.MainLoop()

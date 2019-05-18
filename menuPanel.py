@@ -63,8 +63,8 @@ class MenuPanel(wx.Panel, Utility, Http):
 		for c in submenu.split('|'):
 			if not c in self.parent.dTree: continue
 			(name, mother, sub) = self.parent.dTree[c]
-			index = self.listCtrl.InsertStringItem(sys.maxint, name)
-			self.listCtrl.SetStringItem(index, 1, c)
+			index = self.listCtrl.InsertItem(sys.maxint, name)
+			self.listCtrl.SetItem(index, 1, c)
 		self.listCtrl.Focus(0)
 		self.listCtrl.Select(0)
 		self.Show()

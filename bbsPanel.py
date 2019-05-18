@@ -203,12 +203,12 @@ class BBSPanel(wx.Panel, Utility, Http):
 
 		self.listCtrl.DeleteAllItems()
 		for num, isRead, title, isFile, name, hit, href in self.lArticles:
-			index = self.listCtrl.InsertStringItem(sys.maxint, num)
-			self.listCtrl.SetStringItem(index, 1, isRead)
-			self.listCtrl.SetStringItem(index, 2, title)
-			self.listCtrl.SetStringItem(index, 3, isFile)
-			self.listCtrl.SetStringItem(index, 4, name)
-			self.listCtrl.SetStringItem(index, 5, hit)
+			index = self.listCtrl.InsertItem(sys.maxint, num)
+			self.listCtrl.SetItem(index, 1, isRead)
+			self.listCtrl.SetItem(index, 2, title)
+			self.listCtrl.SetItem(index, 3, isFile)
+			self.listCtrl.SetItem(index, 4, name)
+			self.listCtrl.SetItem(index, 5, hit)
 			self.listCtrl.Focus(0)
 			self.listCtrl.Select(0)
 

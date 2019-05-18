@@ -1,5 +1,4 @@
-﻿
-# 컴퓨터
+﻿# 컴퓨터
 computer	4. 컴퓨터	top	cominfo|comqna|com119|comlec|prg|skt
 cominfo	1. 컴소식	computer	/bbs/board.php?bo_table=cominfo
 comqna	2. 물어보세요	computer	/bbs/board.php?bo_table=comqna
@@ -11,7 +10,7 @@ com119pds	4. 자료실	computer	/bbs/board.php?bo_table=com119pds
 comlec	4. 강좌 / 메뉴얼	computer	mcom|comlecetcb
 mcom	1. 음성 / 동영상 강좌	comlec	/bbs/board.php?bo_table=mcom
 comlecetcb	2. 문서 강좌 / 메뉴얼	comlec	/bbs/board.php?bo_table=comlecetcb
-prg	5. 개발자와 함께	computer	hims|xvsrd|veye|hlt|neo|hv|moitech|mobi|dot|silwel
+prg	5. 개발자와 함께	computer	hims|xvsrd|veye|hlt|hv|moitech|mobi|dot|silwel
 hims	1. 셀바스헬스케어(구 힘스인터내셔널)	prg	himsinfo|himsintro|himsproduc|himsfree|himsqna|himsqna2|himsfaq|himsstudy1|himspds1
 himsinfo	1. 공지사항	hims	/bbs/board.php?bo_table=himsinfo&cl=hims
 himsintro	2. 회사소개	hims	/bbs/board.php?bo_table=himsintro&cl=hims
@@ -100,31 +99,6 @@ hlt4	4. 묻고 답하기	hlt	/bbs/board.php?bo_table=hlt4&cl=hlt
 hlt5	5. 자료실	hlt	/bbs/board.php?bo_table=hlt5&cl=hlt
 hlt6	6. 메뉴얼	hlt	/bbs/board.php?bo_table=hlt6&cl=hlt
 hlt7	7. 한리텍에 바람	hlt	/bbs/write.php?bo_table=hlt7
-neo	5. (주)네오엑세스	prg	neo1|neo2|neo3|neo10|neo4|neo5|neo6|neo-neo7|neo-neo8|neo9
-neo1	1. 공지사항 neo1	neo	/bbs/board.php?bo_table=neo1&cl=neo
-neo2	2. 제품 정보 neo2	neo	/bbs/board.php?bo_table=neo2&cl=neo
-neo3	3. 자유롭게 글쓰기 neo3	neo	/bbs/board.php?bo_table=neo3&cl=neo
-neo10	4. 네오브레일 게시판 neo10	neo	/bbs/board.php?bo_table=neo10&cl=neo
-neo4	5. 윈도우 아이즈 게시판 neo4	neo	/bbs/board.php?bo_table=neo4&cl=neo
-neo5	6. 줌텍스트 퓨전 게시판 neo5	neo	/bbs/board.php?bo_table=neo5&cl=neo
-neo6	7. 기타 제품 묻고 답하기 neo6	neo	/bbs/board.php?bo_table=neo6&cl=neo
-neo-neo7	8. 강의실	neo	neo76|neo71|neo75|neo72|neo73|neo74|neo79
-neo76	1. 네오브레일 강의실	neo-neo7	/bbs/board.php?bo_table=neo76&cl=neo
-neo71	2. 한글 윈도우 아이즈 강의실	neo-neo7	/bbs/board.php?bo_table=neo71&cl=neo
-neo75	3. 줌텍스트 퓨젼 강의실	neo-neo7	/bbs/board.php?bo_table=neo75&cl=neo
-neo72	4. 독서 장치 강의실	neo-neo7	/bbs/board.php?bo_table=neo72&cl=neo
-neo73	5. 기타 강의실	neo-neo7	/bbs/board.php?bo_table=neo73&cl=neo
-neo74	6. 사용자 강의실	neo-neo7	/bbs/board.php?bo_table=neo74&cl=neo
-neo79	99. 전체 강의실	neo-neo7	/bbs/board.php?bo_table=neo79&cl=neo
-neo-neo8	9. 자료실	neo	neo85|neo81|neo86|neo82|neo83|neo84|neo89
-neo85	1. 네오 브레일 자료실	neo-neo8	/bbs/board.php?bo_table=neo85&cl=neo
-neo81	2. 한글 윈도우 아이즈 자료실	neo-neo8	/bbs/board.php?bo_table=neo81&cl=neo
-neo86	3. 줌텍스트 퓨전 자료실	neo-neo8	/bbs/board.php?bo_table=neo86&cl=neo
-neo82	4. 독서 장치 자료실	neo-neo8	/bbs/board.php?bo_table=neo82&cl=neo
-neo83	5. 기타 자료실	neo-neo8	/bbs/board.php?bo_table=neo83&cl=neo
-neo84	6. 사용자 자료실	neo-neo8	/bbs/board.php?bo_table=neo84&cl=neo
-neo89	99. 전체 자료실	neo-neo8	/bbs/board.php?bo_table=neo89&cl=neo
-neo9	10. 운영자에게	neo	/bbs/write.php?bo_table=neo9
 hv	6. 어니스트비전	prg	hv1|hv2|hv3|hv4|hv-hvqna|hv-hvfaq|hv-hv8|hv-hv9|hv10
 hv1	1. 공지사항	hv	/bbs/board.php?bo_table=hv1&cl=hv
 hv2	2. 회사소개	hv	/bbs/board.php?bo_table=hv2&cl=hv
@@ -205,10 +179,27 @@ skt1	1. 공지사항	skt	/bbs/board.php?bo_table=skt1&cl=skt
 skt2	2. 묻고 답하기	skt	/bbs/board.php?bo_table=skt2&cl=skt
 skt3	3. 자료실	skt	/bbs/board.php?bo_table=skt3&cl=skt
 skt4	4. 행복이벤트 참여 게시판	skt	/bbs/board.php?bo_table=skt4&cl=skt
-
 potion	5. 동호회 모음	top	circle|classmate|religion
+circle	1. 일반 동호회	potion	medical|click|tbp|int
+int	54. 프로그래밍 동호회	circle	int1|int2|int3|int4|int5|int6|int7
+int1	1. 공지사항	int	/bbs/board.php?bo_table=int1
+int2	2. 자유게시판	int	/bbs/board.php?bo_table=int2
+int3	3. 질문과 답변	int	/bbs/board.php?bo_table=int3
+int4	4. 자주 발생하는 오류 모음	int	/bbs/board.php?bo_table=int4
+int5	5. 강의실	int	int51|int52|int53|int54|int55
+int51	1. AutoIt	int5	/bbs/board.php?bo_table=int51
+int52	2. C/C++	int5	/bbs/board.php?bo_table=int52
+int53	3. Python	int5	/bbs/board.php?bo_table=int53
+int54	4. HTML/Javascript	int5	/bbs/board.php?bo_table=int54
+int55	5. C#/Java	int5	/bbs/board.php?bo_table=int55
+int6	6. 자료실	int	int61|int62|int63
+int61	1. 개발툴 자료실	int6	/bbs/board.php?bo_table=int61
+int62	2. 유틸리티 자료실	int6	/bbs/board.php?bo_table=int62
+int63	3. 문서 자료실	int6	/bbs/board.php?bo_table=int63
+int7	7. 정회원 공간	int	int71|int72
+int71	1. 정회원 게시판	int7	/bbs/board.php?bo_table=int71
+int72	2. 정회원 자료실	int7	/bbs/board.php?bo_table=int72
 
-circle	1. 일반 동호회	potion	medical|click|tbp
 medical	2. 이료동호회	circle	menotice|mepd|medihome|medifree|mecare|menews|meexper
 menotice	1. 공지사항	medical	/bbs/board.php?bo_table=menotice&cl=medical
 mepd	2. 자료실	medical	meorien99|mewest|meutil|mekyung|mepds

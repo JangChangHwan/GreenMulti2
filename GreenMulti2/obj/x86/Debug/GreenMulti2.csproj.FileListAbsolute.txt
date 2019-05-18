@@ -1,7 +1,0 @@
-D:\MyProjects\GreenMulti2\GreenMulti2\bin\Debug\GreenMulti2.exe
-D:\MyProjects\GreenMulti2\GreenMulti2\bin\Debug\GreenMulti2.pdb
-D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Debug\GreenMulti2.csprojResolveAssemblyReference.cache
-D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Debug\GreenMulti2.Properties.Resources.resources
-D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Debug\GreenMulti2.csproj.GenerateResource.Cache
-D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Debug\GreenMulti2.exe
-D:\MyProjects\GreenMulti2\GreenMulti2\obj\x86\Debug\GreenMulti2.pdb

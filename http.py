@@ -32,9 +32,15 @@ class Http(object):
 	def Get(self, selector, soup=True, headers={}):
 		(host, selector) = self.Url(selector)
 		headers['Cookie'] = self.cookies
-		conn = httplib.HTTPConnection(host)
-		conn.request('GET', selector, headers=headers)
-		self.response = conn.getresponse()
+
+		try:
+			conn = httplib.HTTPConnection(host, timeout=30)
+			conn.request('GET', selector, headers=headers)
+			self.response = conn.getresponse()
+		except:
+			self.response = None
+			return
+
 		if soup: self.Soup(self.response)
 
 
@@ -48,14 +54,19 @@ class Http(object):
 		boundary, body = self.SimpleEncoder(fieldList)
 		content_type = 'multipart/form-data; boundary=%s' % boundary
 
-		h = httplib.HTTPConnection(host)
-		h.putrequest('POST', selector)
-		h.putheader('content-type', content_type)
-		h.putheader('content-length', str(len(body)))
-		h.putheader('Cookie', self.cookies)
-		h.endheaders()
-		h.send(body)
-		self.response = h.getresponse()
+		try:
+			h = httplib.HTTPConnection(host, timeout=30)
+			h.putrequest('POST', selector)
+			h.putheader('content-type', content_type)
+			h.putheader('content-length', str(len(body)))
+			h.putheader('Cookie', self.cookies)
+			h.endheaders()
+			h.send(body)
+			self.response = h.getresponse()
+		except:
+			self.response = None
+			return
+
 		if soup: self.Soup(self.response)
 
 

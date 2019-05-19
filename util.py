@@ -196,7 +196,7 @@ class MenuManager(wx.Dialog):
 		if self.listCtrl.GetItemCount() <= 1: return
 		f = self.listCtrl.GetItemText
 		code, name, mother, sub = f(index, 0), f(index, 1), f(index, 2), f(index, 3)
-		g = self.listCtrl.SetStringItem
+		g = self.listCtrl.SetItem
 		target = index - 1
 		self.listCtrl.SetItemText(index, f(target, 0))
 		g(index, 1, f(target, 1))
@@ -217,7 +217,7 @@ class MenuManager(wx.Dialog):
 
 		f = self.listCtrl.GetItemText
 		code, name, mother, sub = f(index, 0), f(index, 1), f(index, 2), f(index, 3)
-		g = self.listCtrl.SetStringItem
+		g = self.listCtrl.SetItem
 		target = index + 1
 		self.listCtrl.SetItemText(index, f(target, 0))
 		g(index, 1, f(target, 1))
@@ -244,10 +244,10 @@ class MenuManager(wx.Dialog):
 			tinput.Destroy()
 			return
 
-		index = self.listCtrl.InsertStringItem(index, code)
-		self.listCtrl.SetStringItem(index, 1, name)
-		self.listCtrl.SetStringItem(index, 2, mother)
-		self.listCtrl.SetStringItem(index, 3, sub)
+		index = self.listCtrl.InsertItem(index, code)
+		self.listCtrl.SetItem(index, 1, name)
+		self.listCtrl.SetItem(index, 2, mother)
+		self.listCtrl.SetItem(index, 3, sub)
 
 	def Edit(self):
 		index = self.listCtrl.GetFocusedItem()
@@ -266,9 +266,9 @@ class MenuManager(wx.Dialog):
 			return
 
 		self.listCtrl.SetItemText(index, code)
-		self.listCtrl.SetStringItem(index, 1, name)
-		self.listCtrl.SetStringItem(index, 2, mother)
-		self.listCtrl.SetStringItem(index, 3, sub)
+		self.listCtrl.SetItem(index, 1, name)
+		self.listCtrl.SetItem(index, 2, mother)
+		self.listCtrl.SetItem(index, 3, sub)
 
 	def Delete(self):
 		index = self.listCtrl.GetFocusedItem()
@@ -278,10 +278,10 @@ class MenuManager(wx.Dialog):
 	def Display(self):
 		self.listCtrl.DeleteAllItems()
 		for code, (name, mother, sub) in self.parent.dTree.items():
-			index = self.listCtrl.InsertStringItem(sys.maxint, code)
-			self.listCtrl.SetStringItem(index, 1, name)
-			self.listCtrl.SetStringItem(index, 2, mother)
-			self.listCtrl.SetStringItem(index, 3, sub)
+			index = self.listCtrl.InsertItem(sys.maxint, code)
+			self.listCtrl.SetItem(index, 1, name)
+			self.listCtrl.SetItem(index, 2, mother)
+			self.listCtrl.SetItem(index, 3, sub)
 
 
 class MultilineInput(wx.Dialog):
@@ -370,17 +370,17 @@ class TransferInfo(wx.Dialog, Utility):
 				except:
 					pass
 				continue
-			row = self.listCtrl.InsertStringItem(sys.maxint, pNum)
-			self.listCtrl.SetStringItem(row, 1, fileName)
+			row = self.listCtrl.InsertItem(sys.maxint, pNum)
+			self.listCtrl.SetItem(row, 1, fileName)
 			ratio = 100.0 * downSize / totalSize
-			self.listCtrl.SetStringItem(row, 2, u'%0.2f %%' % ratio)
+			self.listCtrl.SetItem(row, 2, u'%0.2f %%' % ratio)
 			if elapsedTime:
 				speed = downSize / 1024.0 / 1024.0 / elapsedTime 
 			else:
 				speed = 0
-			self.listCtrl.SetStringItem(row, 3, u'%0.2f MB/sec' % speed)
+			self.listCtrl.SetItem(row, 3, u'%0.2f MB/sec' % speed)
 			size = totalSize / 1024.0 / 1024.0
-			self.listCtrl.SetStringItem(row, 4, u'%0.2f MB' % size)
+			self.listCtrl.SetItem(row, 4, u'%0.2f MB' % size)
 
 		self.listCtrl.Focus(index)
 		self.listCtrl.Select(index)

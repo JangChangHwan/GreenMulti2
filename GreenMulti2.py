@@ -78,6 +78,9 @@ class GreenMulti2(wx.Frame, Utility):
 		self.daisyMI = wx.MenuItem(self.fileMenu, -1, u"데이지 자동 변환", kind=wx.ITEM_CHECK)
 		self.Bind(wx.EVT_MENU, self.OnAutoDaisy, self.daisyMI)
 
+		menuDataMI = wx.MenuItem(self.fileMenu, -1, u"메뉴 데이터 파일 다운로드")
+		self.fileMenu.Append(menuDataMI)
+		self.Bind(wx.EVT_MENU, self.OnMenuData, menuDataMI)
 		helpMI = wx.MenuItem(self.fileMenu, -1, u"도움말\tF1")
 		self.fileMenu.Append(helpMI)
 		self.Bind(wx.EVT_MENU, self.OnHelp, helpMI)
@@ -189,7 +192,7 @@ class GreenMulti2(wx.Frame, Utility):
 		try:
 			if self.limit == 100:
 				self.limit == 3
-				self.fileMenu.RemoveItem(self.daisyMI)
+				self.fileMenu.Remove(self.daisyMI)
 			self.cookies = self.menu.cookies = ''
 			self.WriteReg('kbuid', '')
 			self.WriteReg('kbupw', '')
@@ -304,6 +307,35 @@ class GreenMulti2(wx.Frame, Utility):
 		ancestor.memoCount = iMemo
 
 
+	def OnMenuData(self, e):
+		try:
+			currentVersion = self.ReadReg("KBUMenu.version")
+			if not currentVersion: currentVersion = "0"
+			r = urllib.urlopen("https://docs.google.com/uc?export=download&id=1pD_qONu0kW1ftWi2JWOvFNFk186JTcU_")
+			ver = r.read()
+			if int(currentVersion) == int(ver):
+				wx.MessageBox(u"최신 메뉴 데이터 파일입니다.\n 현재 버전: %s" % currentVersion, u"알림", parent=self)
+				return
+
+			sel = wx.MessageBox(u"새로운 버전을 다운로드 할까요?\n현재 버전: %s\n최신 버전 : %s" % (currentVersion, ver), u"알림", style=wx.YES|wx.NO, parent=self)
+			if not sel == wx.YES:
+				return
+			dataFile = os.path.join(os.path.dirname(sys.executable), "KBUMenu.dat")
+			if os.path.exists(dataFile + ".bak"):
+				os.remove(dataFile + ".bak")
+			if os.path.exists(dataFile):
+				os.rename(dataFile, dataFile + ".bak")
+			r2 = urllib.urlopen("https://docs.google.com/uc?export=download&id=1HFTO_38JX3VX2HzyYY47I4-oHPQ4__xH")
+			menuData = r2.read()
+			with open(dataFile, "wb") as f:
+				f.write(menuData)
+				self.WriteReg("KBUMenu.version", str(ver))
+				wx.MessageBox(u"다운로드를 완료했습니다.", u"알림", parent=self)
+		except:
+			pass
+
+
+
 	def OnHelp(self, e):
 		HelpBox(self)
 
@@ -340,33 +372,6 @@ class GreenMulti2(wx.Frame, Utility):
 			self.tts = None
 
 	def LoadTreeMenu(self):
-
-		### 새로운 kbuMenu.dat 파일 검색
-		try:
-			### 최초라면 마지막 체크 시간을 0으로 셋팅
-			lastCheckTime = self.ReadReg("KBUMenu")
-			if not lastCheckTime:
-				self.WriteReg("KBUMenu.version", "0")
-				self.WriteReg("KBUMenu", "0.0")
-				lastCheckTime = "0.0"
-			# 하루에 한번만 검사하도록 함
-			currentTime = time.time()
-			lastCheckTime = float(lastCheckTime)
-			if currentTime - lastCheckTime > 86400:
-				self.WriteReg("KBUMenu", str(currentTime))
-				r = urllib.urlopen("https://docs.google.com/uc?export=download&id=1pD_qONu0kW1ftWi2JWOvFNFk186JTcU_")
-				v = r.read()
-				v = int(v)
-				lastVersion = self.ReadReg("KBUMenu.version")
-				lastVersion = int(lastVersion)
-				if lastVersion < v:
-					r2 = urllib.urlopen("https://docs.google.com/uc?export=download&id=1HFTO_38JX3VX2HzyYY47I4-oHPQ4__xH")
-					menuData = r2.read()
-					with open("KBUMenu.dat", "wb") as f:
-						f.write(menuData)
-						self.WriteReg("KBUMenu.version", str(v))
-		except:
-			pass
 
 		# kbuMenu.dat 파일 불러 오기
 		try:
@@ -423,5 +428,5 @@ if __name__ == '__main__':
 #	BetaTest()
 	freeze_support()
 	app = wx.App()
-	GreenMulti2(u'초록멀티 2.1.1')
+	GreenMulti2(u'초록멀티 2.1.3')
 	app.MainLoop()

@@ -5,7 +5,7 @@ basicMenu = u"""
 top	초기메뉴		green|guide|mail|bbs|computer|potion|blindnews|magazin|pds|lib|amcenter|pds2012
 
 # 초록등대
-green	0. 초록등대	top	green1|green2|green3|green4|green5|green6|green7|green8|green9|green10
+green	0. 초록등대	top	green1|green2|green3|green4|green6|green7|green9|green10
 green1	1. 공지사항	green	/bbs/board.php?bo_table=green1&cl=green
 green2	2. 나눔장터	top	/bbs/board.php?bo_table=green2&cl=green
 green3	3. 우리들의 이야기	green	/bbs/board.php?bo_table=green3&cl=green
@@ -17,7 +17,6 @@ green44	4. 멀티미디어/인터넷	green4	/bbs/board.php?bo_table=green44&cl=g
 green45	5. 프로그램 자동설치	green4	/bbs/board.php?bo_table=green45&cl=green
 green46	6. 강의실	green4	/bbs/board.php?bo_table=green46&cl=green
 green47	7. 기타자료실	green4	/bbs/board.php?bo_table=green47&cl=green
-green5	5. 시각장애인 대학생 후원 희망통장	green	/bbs/board.php?bo_table=green5&cl=green
 green6	6. 엔터테인먼트	green	green61|green62|green63|green64|green65|green66|green67|green68|green699
 green61	1. 가요	green6	/bbs/board.php?bo_table=green61&cl=green
 green62	2. 동영상	green6	/bbs/board.php?bo_table=green62&cl=green
@@ -29,7 +28,6 @@ green67	7. 초록 시네마	green6	/bbs/board.php?bo_table=green67&cl=green
 green68	8. 애니 자료실	green6	/bbs/board.php?bo_table=green68&cl=green
 green699	99. 요청게시판	green6	/bbs/board.php?bo_table=green699&cl=green
 green7	7. Youtube	green	/bbs/board.php?bo_table=green7&cl=green
-green8	8. 건의함	green	/bbs/board.php?bo_table=green8&cl=green
 green9	9. 질문게시판	green	/bbs/board.php?bo_table=green9&cl=green
 green10	10. 회원가입 및 정보 확인	green	http://web.kbuwel.or.kr/plugin/ar.club/member.php?cl=green
 
